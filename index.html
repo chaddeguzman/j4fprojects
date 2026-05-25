@@ -3,79 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Just For Fun Projects | Code Sandbox</title>
+    <title>Just For Fun Projects | Sandbox</title>
     
-    <!-- 1. LINK TO MAIN PORTFOLIO STYLESHEET -->
+    <!-- Verified Live Link to Main Portfolio CSS File -->
     <link rel="stylesheet" href="https://chaddeguzman.github.io/style.css" type="text/css">
-
-    <!-- 2. OPTIONAL: Local project-specific overrides (Keeps main style.css clean) -->
-    <style>
-        .project-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-    </style>
 </head>
 <body>
 
-    <!-- Header / Navigation (Reuses your main portfolio's header/nav classes) -->
-    <header class="main-header">
-        <nav class="navbar container">
-            <a href="https://chaddeguzman.github.io/" class="logo">← Back to Portfolio</a>
-            <span class="nav-title">J4F Projects</span>
-        </nav>
-    </header>
-
-    <!-- Main Content Wrapper -->
-    <main class="container project-container">
+    <!-- Main Page Content -->
+    <main class="j4f-container">
         
-        <section class="hero-section">
+        <header class="text-center" style="margin-top: 60px;">
             <h1>Just For Fun Projects</h1>
-            <p class="subtitle">A sandbox for experiments, logic puzzles, and casual coding pieces.</p>
-        </section>
+            <p style="opacity: 0.8; font-size: 1.1rem;">A dedicated sandbox for experiments, logic puzzles, and casual coding pieces.</p>
+            <a href="https://chaddeguzman.github.io/" style="text-decoration: none; font-weight: bold;">← Back to Main Portfolio</a>
+        </header>
 
-        <hr class="divider">
-
-        <!-- Projects Grid (Swap out classes like 'card' or 'btn' with your portfolio's exact class names) -->
-        <div class="project-grid">
+        <!-- Project Grid Layout -->
+        <div class="j4f-project-grid">
             
             <!-- Project Card 1 -->
-            <div class="project-card card">
-                <div class="card-content">
-                    <h3>Project Name One</h3>
-                    <p>A short description of what this mini-project or tool does. Built with HTML, CSS, and JS.</p>
-                    <a href="./project-one/index.html" class="btn btn-primary">Launch Project</a>
-                </div>
+            <div class="j4f-card">
+                <h3>Project Name One</h3>
+                <p>A short description of what this mini-project or tool does. Built with HTML, CSS, and JS.</p>
+                <a href="./project-one/index.html">Launch Project →</a>
             </div>
 
             <!-- Project Card 2 -->
-            <div class="project-card card">
-                <div class="card-content">
-                    <h3>Project Name Two</h3>
-                    <p>Another experimental sandbox layout or interactive tool tracking specific coding logic.</p>
-                    <a href="./project-two/index.html" class="btn btn-primary">Launch Project</a>
-                </div>
+            <div class="j4f-card">
+                <h3>Project Name Two</h3>
+                <p>Another experimental sandbox layout or interactive tool tracking specific coding logic.</p>
+                <a href="./project-two/index.html">Launch Project →</a>
             </div>
 
             <!-- Project Card 3 -->
-            <div class="project-card card">
-                <div class="card-content">
-                    <h3>Project Name Three</h3>
-                    <p>Description of your next fun project. Ready to scale as you add folders to this repo.</p>
-                    <a href="./project-three/index.html" class="btn btn-primary">Launch Project</a>
-                </div>
+            <div class="j4f-card">
+                <h3>Project Name Three</h3>
+                <p>Description of your next fun project. Ready to scale as you add folders to this repo.</p>
+                <a href="./project-three/index.html">Launch Project →</a>
             </div>
 
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container text-center">
-            <p>&copy; 2026 | Built for fun.</p>
-        </div>
+    <footer class="text-center" style="margin: 80px 0 40px 0; opacity: 0.6;">
+        <p>&copy; 2026 | Built for fun.</p>
     </footer>
 
 </body>
