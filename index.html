@@ -1,14 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://chaddeguzman.github.io/style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Just For Fun Projects</title>
+    <title>Just For Fun Projects | Code Sandbox</title>
+    
+    <!-- 1. LINK TO YOUR MAIN PORTFOLIO STYLESHEET (No modification needed on the main repo) -->
+    <link rel="stylesheet" href="https://chaddeguzman.github.io/style.css">
+
+    <!-- 2. OPTIONAL: Local project-specific overrides (Keeps main style.css clean) -->
+    <style>
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Just For Fun Projects Hub</h1>
-    <p>Experimentation space and side-sprints.</p><br>
-    <a href="https://chaddeguzman.github.io/#j4f">← Back to Main</a>
+
+    <!-- Header / Navigation (Reuses your main portfolio's header/nav classes) -->
+    <header class="main-header">
+        <nav class="navbar container">
+            <a href="https://yourusername.github.io/your-portfolio-repo/" class="logo">← Back to Portfolio</a>
+            <span class="nav-title">J4F Projects</span>
+        </nav>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <main class="container project-container">
+        
+        <section class="hero-section">
+            <h1>Just For Fun Projects</h1>
+            <p class="subtitle">A sandbox for experiments, logic puzzles, and casual coding pieces.</p>
+        </section>
+
+        <hr class="divider">
+
+        <!-- Projects Grid (Swap out classes like 'card' or 'btn' with your portfolio's exact class names) -->
+        <div class="project-grid">
+            
+            <!-- Project Card 1 -->
+            <div class="project-card card">
+                <div class="card-content">
+                    <h3>Project Name One</h3>
+                    <p>A short description of what this mini-project or tool does. Built with HTML, CSS, and JS.</p>
+                    <a href="./project-one/index.html" class="btn btn-primary">Launch Project</a>
+                </div>
+            </div>
+
+            <!-- Project Card 2 -->
+            <div class="project-card card">
+                <div class="card-content">
+                    <h3>Project Name Two</h3>
+                    <p>Another experimental sandbox layout or interactive tool tracking specific coding logic.</p>
+                    <a href="./project-two/index.html" class="btn btn-primary">Launch Project</a>
+                </div>
+            </div>
+
+            <!-- Project Card 3 -->
+            <div class="project-card card">
+                <div class="card-content">
+                    <h3>Project Name Three</h3>
+                    <p>Description of your next fun project. Ready to scale as you add folders to this repo.</p>
+                    <a href="./project-three/index.html" class="btn btn-primary">Launch Project</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container text-center">
+            <p>&copy; 2026 | Built for fun.</p>
+        </div>
+    </footer>
+
 </body>
 </html>
