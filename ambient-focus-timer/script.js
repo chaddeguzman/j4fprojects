@@ -156,6 +156,47 @@ function pauseTimer() {
   timerInput.disabled = false; // Unlock input for adjustments when paused
 }
 
+function startTimer() {
+    if (isRunning) {
+        // Pause function
+        clearInterval(timerInterval);
+        startBtn.textContent = "Start";
+        startBtn.style.backgroundColor = "#3b82f6";
+        isRunning = false;
+    } else {
+        // Start function
+        initAudioContext(); // Initialize audio safely on click user event
+        isRunning = true;
+        startBtn.textContent = "Pause";
+        startBtn.style.backgroundColor = "#ef4444"; // Change red to signify pause action
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateDisplay();
+            } else {
+                clearInterval(timerInterval);
+                playAlertChime();
+                alert("Session Finished! Take a well-deserved ambient break.");
+                resetTimer();
+            }
+        }, 1000);
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 25 * 60;
+    isRunning = false;
+    startBtn.textContent = "Start";
+    startBtn.style.backgroundColor = "#3b82f6";
+    updateDisplay();
+}
+
+startBtn.addEventListener('click', startTimer);
+resetBtn.addEventListener('click', resetTimer);
+
+
 // --- 3. SYNTHESIZE AUDIO SCAPE (WEB AUDIO API GENERATOR) ---
 let audioCtx = null;
 let alphaWavesGainNode = null;
