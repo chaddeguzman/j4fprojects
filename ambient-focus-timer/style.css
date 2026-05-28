@@ -108,6 +108,16 @@ header p {
     color: white;
 }
 
+.btn-stop {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-stop:hover {
+    background-color: #dc2626;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+}
+
 /* Mixer Slider Panel styling */
 .mixer-section {
     border-top: 1px solid rgba(255, 255, 255, 0.06);

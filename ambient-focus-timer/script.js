@@ -1,7 +1,6 @@
-// --- 1. SETUP CANVAS PARTICLES (ENVIRONMENTAL GENERATIVE BACKDROP) ---
+// --- CANVAS PARTICLES ---
 const canvas = document.getElementById('ambient-canvas');
 const ctx = canvas.getContext('2d');
-
 let particlesArray = [];
 const particleDensityInput = document.getElementById('particle-speed');
 
@@ -18,14 +17,12 @@ class Particle {
         this.y = Math.random() * canvas.height;
         this.size = Math.random() * 2.5 + 0.5;
         this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = -Math.random() * 0.4 - 0.1; // Float upwards gently
+        this.speedY = -Math.random() * 0.4 - 0.1;
         this.alpha = Math.random() * 0.5 + 0.1;
     }
     update(speedMultiplier) {
         this.x += this.speedX * (speedMultiplier * 0.5);
         this.y += this.speedY * (speedMultiplier * 0.5);
-        
-        // Wrap edges smoothly
         if (this.y < 0) {
             this.y = canvas.height;
             this.x = Math.random() * canvas.width;
@@ -37,8 +34,7 @@ class Particle {
         ctx.globalAlpha = this.alpha;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        // Use an ethereal focus color scheme
-        ctx.fillStyle = '#c084fc'; 
+        ctx.fillStyle = '#93c5fd';
         ctx.shadowBlur = 8;
         ctx.shadowColor = '#93c5fd';
         ctx.fill();
@@ -48,20 +44,13 @@ class Particle {
 
 function initParticles() {
     particlesArray = [];
-    const count = 75; 
-    for (let i = 0; i < count; i++) {
-        particlesArray.push(new Particle());
-    }
+    for (let i = 0; i < 75; i++) particlesArray.push(new Particle());
 }
 
 function animateParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const densitySpeed = parseFloat(particleDensityInput.value);
-    
-    particlesArray.forEach(p => {
-        p.update(densitySpeed);
-        p.draw();
-    });
+    const speed = parseFloat(particleDensityInput.value);
+    particlesArray.forEach(p => { p.update(speed); p.draw(); });
     requestAnimationFrame(animateParticles);
 }
 
@@ -69,201 +58,151 @@ initParticles();
 animateParticles();
 
 
-// --- THE POMODORO TIMER CONFIGURATION ---
-// --- 1. State Variables & DOM Elements ---
-let countdownInterval = null;
-let isRunning = false;
-let totalSeconds = 25 * 60; // Default to 25 minutes
-
+// --- TIMER ---
 const timerInput = document.getElementById('timer-input');
-const startBtn = document.getElementById('start-btn'); // Replace with your actual start button ID
+const startBtn = document.getElementById('start-btn');
+const resetBtn = document.getElementById('reset-btn');
 
-// --- 2. Helper Functions ---
+const DEFAULT_SECONDS = 25 * 60;
+let totalSeconds = DEFAULT_SECONDS;
+let timerInterval = null;
+let isRunning = false;
+
 function updateDisplay(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  // Format numbers to always display 2 digits (e.g., 05:09)
-  timerInput.value = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    timerInput.value = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 function parseInputToSeconds(value) {
-  // Cleans the input string and splits it by the colon
-  const parts = value.split(':');
-  
-  if (parts.length === 2) {
-    const minutes = parseInt(parts[0], 10) || 0;
-    const seconds = parseInt(parts[1], 10) || 0;
-    return (minutes * 60) + seconds;
-  } else if (parts.length === 1) {
-    // If user just types a raw number like "20", treat it as minutes
+    const parts = value.split(':');
+    if (parts.length === 2) {
+        const minutes = parseInt(parts[0], 10) || 0;
+        const seconds = parseInt(parts[1], 10) || 0;
+        return minutes * 60 + seconds;
+    }
     const minutes = parseInt(parts[0], 10) || 0;
     return minutes * 60;
-  }
-  return 25 * 60; // Fallback default
 }
 
-// --- 3. Event Listeners ---
-
-// Update duration when the user types or clicks away
-timerInput.addEventListener('change', () => {
-  const seconds = parseInputToSeconds(timerInput.value);
-  totalSeconds = seconds > 0 ? seconds : 25 * 60; // Guard against 0 or negative values
-  updateDisplay(totalSeconds);
-});
-
-// Pause countdown if user clicks inside the box to edit it
-timerInput.addEventListener('focus', () => {
-  if (isRunning) {
-    pauseTimer();
-  }
-});
-
-// Optional: Format automatically when pressing "Enter"
-timerInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    timerInput.blur(); // Triggers the 'change' event naturally
-  }
-});
-
-// --- 4. Core Timer Engine Control ---
-function startTimer() {
-  if (isRunning) return;
-  
-  // Parse current input status right before starting just in case
-  totalSeconds = parseInputToSeconds(timerInput.value);
-  
-  if (totalSeconds <= 0) return;
-
-  isRunning = true;
-  timerInput.disabled = true; // Lock input editing while the timer runs
-
-  countdownInterval = setInterval(() => {
-    totalSeconds--;
-    updateDisplay(totalSeconds);
-
-    if (totalSeconds <= 0) {
-      clearInterval(countdownInterval);
-      isRunning = false;
-      timerInput.disabled = false;
-      alert("Time's up!"); // Replace with your custom sound trigger or canvas flash notification
-    }
-  }, 1000);
-}
-
-function pauseTimer() {
-  clearInterval(countdownInterval);
-  isRunning = false;
-  timerInput.disabled = false; // Unlock input for adjustments when paused
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    isRunning = false;
+    timerInput.disabled = false;
+    startBtn.textContent = 'Start';
+    startBtn.classList.remove('btn-stop');
+    startBtn.classList.add('btn-primary');
 }
 
 function startTimer() {
-    if (isRunning) {
-        // Pause function
-        clearInterval(timerInterval);
-        startBtn.textContent = "Start";
-        startBtn.style.backgroundColor = "#3b82f6";
-        isRunning = false;
-    } else {
-        // Start function
-        initAudioContext(); // Initialize audio safely on click user event
-        isRunning = true;
-        startBtn.textContent = "Pause";
-        startBtn.style.backgroundColor = "#ef4444"; // Change red to signify pause action
-        
-        timerInterval = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateDisplay();
-            } else {
-                clearInterval(timerInterval);
-                playAlertChime();
-                alert("Session Finished! Take a well-deserved ambient break.");
-                resetTimer();
-            }
-        }, 1000);
-    }
+    totalSeconds = parseInputToSeconds(timerInput.value);
+    if (totalSeconds <= 0) return;
+
+    isRunning = true;
+    timerInput.disabled = true;
+    startBtn.textContent = 'Stop';
+    startBtn.classList.remove('btn-primary');
+    startBtn.classList.add('btn-stop');
+
+    initAudioContext();
+
+    timerInterval = setInterval(() => {
+        totalSeconds--;
+        updateDisplay(totalSeconds);
+        if (totalSeconds <= 0) {
+            stopTimer();
+            playAlertChime();
+        }
+    }, 1000);
 }
 
 function resetTimer() {
-    clearInterval(timerInterval);
-    timeLeft = 25 * 60;
-    isRunning = false;
-    startBtn.textContent = "Start";
-    startBtn.style.backgroundColor = "#3b82f6";
-    updateDisplay();
+    stopTimer();
+    totalSeconds = DEFAULT_SECONDS;
+    updateDisplay(totalSeconds);
 }
 
-startBtn.addEventListener('click', startTimer);
+startBtn.addEventListener('click', () => {
+    if (isRunning) {
+        stopTimer();
+    } else {
+        startTimer();
+    }
+});
+
 resetBtn.addEventListener('click', resetTimer);
 
+timerInput.addEventListener('focus', () => {
+    if (isRunning) stopTimer();
+});
 
-// --- 3. SYNTHESIZE AUDIO SCAPE (WEB AUDIO API GENERATOR) ---
+timerInput.addEventListener('change', () => {
+    const seconds = parseInputToSeconds(timerInput.value);
+    totalSeconds = seconds > 0 ? seconds : DEFAULT_SECONDS;
+    updateDisplay(totalSeconds);
+});
+
+timerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') timerInput.blur();
+});
+
+
+// --- AUDIO ---
 let audioCtx = null;
 let alphaWavesGainNode = null;
 const binauralSlider = document.getElementById('binaural-volume');
 const audioToggleBtn = document.getElementById('audio-toggle');
 
 function initAudioContext() {
-    if (audioCtx) return; // Prevent double initialization
-    
-    // Create Audio Pipeline context framework
+    if (audioCtx) return;
+
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     alphaWavesGainNode = audioCtx.createGain();
-    alphaWavesGainNode.gain.value = binauralSlider.value;
+    alphaWavesGainNode.gain.value = parseFloat(binauralSlider.value);
     alphaWavesGainNode.connect(audioCtx.destination);
-    
-    // Generate a comforting Alpha Wave structure (Binaural Drone effect)
-    // Oscillator 1: Left Ear Tone
-    const oscLeft = audioCtx.createOscillator();
-    const pannerLeft = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
-    oscLeft.type = 'sine';
-    oscLeft.frequency.value = 150; // Base stabilizing low tone
-    
-    // Oscillator 2: Right Ear Tone offset by 10Hz (Targeting 10Hz Alpha Focus brainwave tracking state)
-    const oscRight = audioCtx.createOscillator();
-    const pannerRight = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
-    oscRight.type = 'sine';
-    oscRight.frequency.value = 160; 
 
-    if (pannerLeft && pannerRight) {
-        pannerLeft.pan.value = -1; // hard left
-        pannerRight.pan.value = 1; // hard right
-        oscLeft.connect(pannerLeft).connect(alphaWavesGainNode);
-        oscRight.connect(pannerRight).connect(alphaWavesGainNode);
+    const oscLeft = audioCtx.createOscillator();
+    const oscRight = audioCtx.createOscillator();
+    oscLeft.type = 'sine';
+    oscLeft.frequency.value = 150;
+    oscRight.type = 'sine';
+    oscRight.frequency.value = 160;
+
+    if (audioCtx.createStereoPanner) {
+        const panL = audioCtx.createStereoPanner();
+        const panR = audioCtx.createStereoPanner();
+        panL.pan.value = -1;
+        panR.pan.value = 1;
+        oscLeft.connect(panL).connect(alphaWavesGainNode);
+        oscRight.connect(panR).connect(alphaWavesGainNode);
     } else {
         oscLeft.connect(alphaWavesGainNode);
         oscRight.connect(alphaWavesGainNode);
     }
-    
+
     oscLeft.start();
     oscRight.start();
-    
-    audioToggleBtn.textContent = "Audio Active";
-    audioToggleBtn.style.backgroundColor = "#22c55e";
+
+    audioToggleBtn.textContent = 'Audio Active';
+    audioToggleBtn.style.backgroundColor = '#22c55e';
 }
 
-// Adjust synthesized volume immediately on range movement
 binauralSlider.addEventListener('input', (e) => {
-    if (alphaWavesGainNode) {
-        alphaWavesGainNode.gain.value = e.target.value;
-    }
+    if (alphaWavesGainNode) alphaWavesGainNode.gain.value = parseFloat(e.target.value);
 });
 
 audioToggleBtn.addEventListener('click', initAudioContext);
 
-// Generates a quick melodic retro chime note cleanly when focus timer completes
 function playAlertChime() {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5 clean note
-    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.3); // Ramp smoothly to G5 note
-    
+    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.3);
     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5); // Echo fade out
-    
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
     osc.connect(gainNode).connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.5);
