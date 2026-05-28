@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe — CDG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo">CDG</div>
+      <h1 class="header-title">Tic <em>Tac</em> Toe</h1>
+      <div class="header-sub">A game of wits and patience.</div>
+    </header>
+
+    <!-- Mode Selection Screen -->
+    <div class="screen" id="screen-mode">
+      <div class="screen-inner">
+        <p class="screen-label">01 — Choose Mode</p>
+        <h2 class="screen-heading">How do you<br>want to play?</h2>
+        <div class="mode-cards">
+          <button class="mode-card" id="btn-pvp">
+            <div class="mode-card-icon">⚔</div>
+            <h3>vs Player</h3>
+            <p>Challenge a friend on the same device.</p>
+          </button>
+          <button class="mode-card" id="btn-ai">
+            <div class="mode-card-icon">◎</div>
+            <h3>vs AI</h3>
+            <p>Take on the machine. Pick your difficulty.</p>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Difficulty Selection Screen -->
+    <div class="screen hidden" id="screen-difficulty">
+      <div class="screen-inner">
+        <p class="screen-label">02 — Difficulty</p>
+        <h2 class="screen-heading">Choose your<br>challenge.</h2>
+        <div class="diff-cards">
+          <button class="diff-card" data-diff="easy">
+            <span class="diff-label">Easy</span>
+            <span class="diff-desc">The AI makes random moves.</span>
+          </button>
+          <button class="diff-card" data-diff="medium">
+            <span class="diff-label">Medium</span>
+            <span class="diff-desc">The AI plays smart, not perfect.</span>
+          </button>
+          <button class="diff-card" data-diff="hard">
+            <span class="diff-label">Hard</span>
+            <span class="diff-desc">Unbeatable. The AI never loses.</span>
+          </button>
+        </div>
+        <button class="btn-back" id="back-to-mode">← Back</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="screen hidden" id="screen-game">
+      <div class="game-layout">
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <div class="status-mode" id="status-mode">vs Player</div>
+          <div class="status-turn" id="status-turn">
+            <span class="turn-indicator" id="turn-x">X</span>
+            <span class="turn-sep">·</span>
+            <span class="turn-indicator" id="turn-o">O</span>
+          </div>
+          <button class="btn-menu" id="btn-menu">Menu</button>
+        </div>
+
+        <!-- Score Board -->
+        <div class="scoreboard">
+          <div class="score-item">
+            <span class="score-player">X</span>
+            <span class="score-val" id="score-x">0</span>
+          </div>
+          <div class="score-item score-draw">
+            <span class="score-player">Draw</span>
+            <span class="score-val" id="score-draw">0</span>
+          </div>
+          <div class="score-item">
+            <span class="score-player">O</span>
+            <span class="score-val" id="score-o">0</span>
+          </div>
+        </div>
+
+        <!-- Board -->
+        <div class="board" id="board">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+        </div>
+
+        <!-- Result Overlay -->
+        <div class="result-overlay hidden" id="result-overlay">
+          <div class="result-box">
+            <div class="result-icon" id="result-icon">✕</div>
+            <div class="result-msg" id="result-msg">Player X Wins!</div>
+            <div class="result-actions">
+              <button class="btn btn-primary" id="btn-rematch">Rematch</button>
+              <button class="btn btn-ghost" id="btn-back-menu">Main Menu</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <span>Built by <a href="https://github.com/chaddeguzman" target="_blank" rel="noopener">Chad De Guzman</a></span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
