@@ -172,3 +172,24 @@ input[type="range"] {
 .back-link:hover {
     color: #94a3b8;
 }
+
+/* Styling the editable timer input to look like text */
+#timer-input {
+  font-size: 5rem; /* Adjust to match your existing design scale */
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-color, #ffffff);
+  background: transparent;
+  border: none;
+  text-align: center;
+  width: 100%;
+  max-width: 250px;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.3s ease;
+}
+
+#timer-input:focus {
+  color: var(--accent-color, #00fff0); /* Visual cue when editing */
+  cursor: text;
+}
