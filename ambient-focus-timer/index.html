@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambient Focus Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="ambient-canvas"></canvas>
+
+    <main class="glass-container">
+        <header>
+            <h1>Ambient Space</h1>
+            <p>Customize your concentration environment.</p>
+        </header>
+
+        <section class="timer-section">
+            <div id="timer-display" class="countdown">25:00</div>
+            <div class="controls-row">
+                <button id="start-btn" class="btn btn-primary">Start</button>
+                <button id="reset-btn" class="btn btn-secondary">Reset</button>
+            </div>
+        </section>
+
+        <section class="mixer-section">
+            <h3>Soundscape Mixer</h3>
+            
+            <div class="mixer-control">
+                <label for="binaural-volume">Deep Focus Alpha Waves</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="binaural-volume" min="0" max="1" step="0.01" value="0">
+                    <button id="audio-toggle" class="btn-audio-init">Enable Audio</button>
+                </div>
+            </div>
+            
+            <div class="mixer-control">
+                <label for="particle-speed">Visual Dust Density</label>
+                <input type="range" id="particle-speed" min="1" max="10" step="1" value="3">
+            </div>
+        </section>
+        
+        <footer>
+            <a href="../" class="back-link">← Return to Portfolio</a>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
