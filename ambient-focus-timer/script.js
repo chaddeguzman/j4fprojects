@@ -69,61 +69,92 @@ initParticles();
 animateParticles();
 
 
-// --- 2. THE POMODORO TIMER CONFIGURATION ---
-let timerInterval = null;
-let timeLeft = 25 * 60; // 25 Minutes standard length
+// --- THE POMODORO TIMER CONFIGURATION ---
+// --- 1. State Variables & DOM Elements ---
+let countdownInterval = null;
 let isRunning = false;
+let totalSeconds = 25 * 60; // Default to 25 minutes
 
-const display = document.getElementById('timer-display');
-const startBtn = document.getElementById('start-btn');
-const resetBtn = document.getElementById('reset-btn');
+const timerInput = document.getElementById('timer-input');
+const startBtn = document.getElementById('start-btn'); // Replace with your actual start button ID
 
-function updateDisplay() {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+// --- 2. Helper Functions ---
+function updateDisplay(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  // Format numbers to always display 2 digits (e.g., 05:09)
+  timerInput.value = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+function parseInputToSeconds(value) {
+  // Cleans the input string and splits it by the colon
+  const parts = value.split(':');
+  
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10) || 0;
+    const seconds = parseInt(parts[1], 10) || 0;
+    return (minutes * 60) + seconds;
+  } else if (parts.length === 1) {
+    // If user just types a raw number like "20", treat it as minutes
+    const minutes = parseInt(parts[0], 10) || 0;
+    return minutes * 60;
+  }
+  return 25 * 60; // Fallback default
+}
+
+// --- 3. Event Listeners ---
+
+// Update duration when the user types or clicks away
+timerInput.addEventListener('change', () => {
+  const seconds = parseInputToSeconds(timerInput.value);
+  totalSeconds = seconds > 0 ? seconds : 25 * 60; // Guard against 0 or negative values
+  updateDisplay(totalSeconds);
+});
+
+// Pause countdown if user clicks inside the box to edit it
+timerInput.addEventListener('focus', () => {
+  if (isRunning) {
+    pauseTimer();
+  }
+});
+
+// Optional: Format automatically when pressing "Enter"
+timerInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    timerInput.blur(); // Triggers the 'change' event naturally
+  }
+});
+
+// --- 4. Core Timer Engine Control ---
 function startTimer() {
-    if (isRunning) {
-        // Pause function
-        clearInterval(timerInterval);
-        startBtn.textContent = "Start";
-        startBtn.style.backgroundColor = "#3b82f6";
-        isRunning = false;
-    } else {
-        // Start function
-        initAudioContext(); // Initialize audio safely on click user event
-        isRunning = true;
-        startBtn.textContent = "Pause";
-        startBtn.style.backgroundColor = "#ef4444"; // Change red to signify pause action
-        
-        timerInterval = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateDisplay();
-            } else {
-                clearInterval(timerInterval);
-                playAlertChime();
-                alert("Session Finished! Take a well-deserved ambient break.");
-                resetTimer();
-            }
-        }, 1000);
+  if (isRunning) return;
+  
+  // Parse current input status right before starting just in case
+  totalSeconds = parseInputToSeconds(timerInput.value);
+  
+  if (totalSeconds <= 0) return;
+
+  isRunning = true;
+  timerInput.disabled = true; // Lock input editing while the timer runs
+
+  countdownInterval = setInterval(() => {
+    totalSeconds--;
+    updateDisplay(totalSeconds);
+
+    if (totalSeconds <= 0) {
+      clearInterval(countdownInterval);
+      isRunning = false;
+      timerInput.disabled = false;
+      alert("Time's up!"); // Replace with your custom sound trigger or canvas flash notification
     }
+  }, 1000);
 }
 
-function resetTimer() {
-    clearInterval(timerInterval);
-    timeLeft = 25 * 60;
-    isRunning = false;
-    startBtn.textContent = "Start";
-    startBtn.style.backgroundColor = "#3b82f6";
-    updateDisplay();
+function pauseTimer() {
+  clearInterval(countdownInterval);
+  isRunning = false;
+  timerInput.disabled = false; // Unlock input for adjustments when paused
 }
-
-startBtn.addEventListener('click', startTimer);
-resetBtn.addEventListener('click', resetTimer);
-
 
 // --- 3. SYNTHESIZE AUDIO SCAPE (WEB AUDIO API GENERATOR) ---
 let audioCtx = null;
