@@ -195,7 +195,7 @@ function resetBoard() {
   state.aiThinking = false;
 
   getCells().forEach(cell => {
-    cell.textContent = '';
+    cell.dataset.mark = '';
     cell.className = 'cell';
   });
 
@@ -242,7 +242,7 @@ function placeMarker(idx, player) {
   state.board[idx] = player;
   const cells = getCells();
   const cell = cells[idx];
-  cell.textContent = player;
+  cell.dataset.mark = player;          // ::before reads this via attr(data-mark)
   cell.classList.add(player.toLowerCase(), 'taken');
 }
 
