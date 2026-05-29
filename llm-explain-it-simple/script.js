@@ -59,14 +59,17 @@ async function explain() {
     teenText.textContent = teenRes;
 
   } catch (err) {
-    kidText.textContent  = 'Something went wrong. Please try again.';
-    teenText.textContent = 'Something went wrong. Please try again.';
+    console.error('Explain error:', err);
+    const msg = err?.message || 'Something went wrong. Please try again.';
+    kidText.textContent  = msg;
+    teenText.textContent = msg;
   }
 
   // Reset button
   btn.disabled    = false;
   btn.textContent = 'Explain It ↓';
 }
+
 
 // --- API Call per Audience ---
 async function fetchExplanation(term, audience) {
@@ -77,13 +80,22 @@ async function fetchExplanation(term, audience) {
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       messages: [{ role: 'user', content: prompts[audience] }]
     })
   });
+
+  if (!response.ok) {
+    const errData = await response.json();
+    console.error('API error:', errData);
+    throw new Error(errData?.error?.message || 'API request failed');
+  }
 
   const data = await response.json();
   return data.content?.[0]?.text || 'Could not generate explanation.';
