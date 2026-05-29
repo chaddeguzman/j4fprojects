@@ -341,6 +341,26 @@ body {
 
 .btn-back:hover { color: var(--accent); }
 
+/* --- Return to J4F Projects --- */
+.btn-return {
+  display: inline-block;
+  margin-top: 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-decoration: none;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.btn-return:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent-dim);
+}
+
 /* --- Game Layout --- */
 .game-layout {
   width: 100%;
