@@ -1,61 +1,81 @@
 // ============================================================
 // TIC TAC TOE — CDG
-// Modes: vs Player | vs AI (Easy / Medium / Hard)
+// Modes:      vs Player | vs AI (Easy / Medium / Hard)
+// Board sizes: 3×3 (win=3) | 4×4 (win=4) | 5×5 (win=4)
 // ============================================================
 
 // --- State ---
 const state = {
-  mode: null,       // 'pvp' | 'ai'
-  difficulty: null, // 'easy' | 'medium' | 'hard'
-  board: Array(9).fill(null),
+  mode:          null,   // 'pvp' | 'ai'
+  boardSize:     3,      // 3 | 4 | 5
+  winTarget:     3,      // 3 for 3×3, 4 for 4×4 and 5×5
+  difficulty:    null,   // 'easy' | 'medium' | 'hard'
+  board:         [],
   currentPlayer: 'X',
-  scores: { X: 0, O: 0, Draw: 0 },
-  gameActive: false,
-  aiThinking: false,
+  scores:        { X: 0, O: 0, Draw: 0 },
+  gameActive:    false,
+  aiThinking:    false,
+  winningLines:  [],     // pre-computed for current board size
 };
-
-const WINNING_LINES = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-  [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
-  [0, 4, 8], [2, 4, 6],             // diagonals
-];
 
 // --- DOM References ---
 const screens = {
   mode:       document.getElementById('screen-mode'),
+  size:       document.getElementById('screen-size'),
   difficulty: document.getElementById('screen-difficulty'),
   game:       document.getElementById('screen-game'),
 };
 
-const cells       = document.querySelectorAll('.cell');
-const boardEl     = document.getElementById('board');
+const boardEl       = document.getElementById('board');
 const resultOverlay = document.getElementById('result-overlay');
-const resultIcon  = document.getElementById('result-icon');
-const resultMsg   = document.getElementById('result-msg');
-const statusMode  = document.getElementById('status-mode');
-const turnX       = document.getElementById('turn-x');
-const turnO       = document.getElementById('turn-o');
-const scoreX      = document.getElementById('score-x');
-const scoreO      = document.getElementById('score-o');
-const scoreDraw   = document.getElementById('score-draw');
+const resultIcon    = document.getElementById('result-icon');
+const resultMsg     = document.getElementById('result-msg');
+const statusMode    = document.getElementById('status-mode');
+const turnX         = document.getElementById('turn-x');
+const turnO         = document.getElementById('turn-o');
+const scoreX        = document.getElementById('score-x');
+const scoreO        = document.getElementById('score-o');
+const scoreDraw     = document.getElementById('score-draw');
+const winNote       = document.getElementById('win-note');
 
-// --- Screen Navigation ---
+// ============================================================
+// SCREEN NAVIGATION
+// ============================================================
+
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.add('hidden'));
-  screens[name].classList.remove('hidden');
+  const el = screens[name];
+  el.classList.remove('hidden');
+  // Re-trigger animation
+  el.style.animation = 'none';
+  el.offsetHeight; // reflow
+  el.style.animation = '';
 }
 
 // --- Mode Selection ---
 document.getElementById('btn-pvp').addEventListener('click', () => {
   state.mode = 'pvp';
-  state.difficulty = null;
-  initGame();
-  showScreen('game');
+  showScreen('size');
 });
 
 document.getElementById('btn-ai').addEventListener('click', () => {
   state.mode = 'ai';
-  showScreen('difficulty');
+  showScreen('size');
+});
+
+// --- Board Size Selection ---
+document.querySelectorAll('.size-card').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.boardSize = parseInt(btn.dataset.size);
+    state.winTarget = state.boardSize === 3 ? 3 : 4;
+
+    if (state.mode === 'pvp') {
+      initGame();
+      showScreen('game');
+    } else {
+      showScreen('difficulty');
+    }
+  });
 });
 
 // --- Difficulty Selection ---
@@ -68,42 +88,113 @@ document.querySelectorAll('.diff-card').forEach(btn => {
 });
 
 // --- Back Buttons ---
-document.getElementById('back-to-mode').addEventListener('click', () => {
-  showScreen('mode');
-});
+document.getElementById('back-size-to-mode').addEventListener('click', () => showScreen('mode'));
+document.getElementById('back-diff-to-size').addEventListener('click', () => showScreen('size'));
+document.getElementById('btn-menu').addEventListener('click', () => showScreen('mode'));
+document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('mode'));
+document.getElementById('btn-rematch').addEventListener('click', () => resetBoard());
 
-document.getElementById('btn-menu').addEventListener('click', () => {
-  showScreen('mode');
-});
+// ============================================================
+// WINNING LINES GENERATOR
+// Generates all valid lines of length `target` on an N×N board
+// ============================================================
 
-document.getElementById('btn-back-menu').addEventListener('click', () => {
-  showScreen('mode');
-});
+function generateWinningLines(n, target) {
+  const lines = [];
 
-document.getElementById('btn-rematch').addEventListener('click', () => {
-  resetBoard();
-});
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
 
-// --- Init Game ---
+      // Horizontal
+      if (c + target <= n) {
+        const line = [];
+        for (let k = 0; k < target; k++) line.push(r * n + c + k);
+        lines.push(line);
+      }
+
+      // Vertical
+      if (r + target <= n) {
+        const line = [];
+        for (let k = 0; k < target; k++) line.push((r + k) * n + c);
+        lines.push(line);
+      }
+
+      // Diagonal ↘
+      if (r + target <= n && c + target <= n) {
+        const line = [];
+        for (let k = 0; k < target; k++) line.push((r + k) * n + (c + k));
+        lines.push(line);
+      }
+
+      // Diagonal ↙
+      if (r + target <= n && c - target + 1 >= 0) {
+        const line = [];
+        for (let k = 0; k < target; k++) line.push((r + k) * n + (c - k));
+        lines.push(line);
+      }
+    }
+  }
+
+  return lines;
+}
+
+// ============================================================
+// BOARD RENDERING
+// ============================================================
+
+function buildBoard() {
+  const n = state.boardSize;
+  boardEl.innerHTML = '';
+  boardEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  boardEl.className = `board size-${n}`;
+
+  for (let i = 0; i < n * n; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    cell.addEventListener('click', () => handleMove(i));
+    boardEl.appendChild(cell);
+  }
+}
+
+function getCells() {
+  return boardEl.querySelectorAll('.cell');
+}
+
+// ============================================================
+// GAME INIT & RESET
+// ============================================================
+
 function initGame() {
+  const n = state.boardSize;
+  state.winningLines = generateWinningLines(n, state.winTarget);
   state.scores = { X: 0, O: 0, Draw: 0 };
   updateScoreDisplay();
 
-  const modeLabel = state.mode === 'pvp'
+  // Status bar label
+  let modeLabel = state.mode === 'pvp'
     ? 'vs Player'
     : `vs AI — ${capitalize(state.difficulty)}`;
+  modeLabel += `  ·  ${n}×${n}`;
   statusMode.textContent = modeLabel;
 
+  // Win note
+  winNote.textContent = state.winTarget === 3
+    ? 'First 3 in a row wins'
+    : 'First 4 in a row wins';
+
+  buildBoard();
   resetBoard();
 }
 
 function resetBoard() {
-  state.board = Array(9).fill(null);
+  const n = state.boardSize;
+  state.board = Array(n * n).fill(null);
   state.currentPlayer = 'X';
   state.gameActive = true;
   state.aiThinking = false;
 
-  cells.forEach(cell => {
+  getCells().forEach(cell => {
     cell.textContent = '';
     cell.className = 'cell';
   });
@@ -112,26 +203,19 @@ function resetBoard() {
   updateTurnIndicator();
 }
 
-// --- Cell Click Handler ---
-cells.forEach(cell => {
-  cell.addEventListener('click', () => {
-    const idx = parseInt(cell.dataset.index);
-    handleMove(idx);
-  });
-});
+// ============================================================
+// MOVE HANDLING
+// ============================================================
 
 function handleMove(idx) {
   if (!state.gameActive) return;
-  if (state.board[idx]) return;
-  if (state.aiThinking) return;
+  if (state.board[idx])  return;
+  if (state.aiThinking)  return;
 
   placeMarker(idx, state.currentPlayer);
 
-  const result = checkResult();
-  if (result) {
-    endGame(result);
-    return;
-  }
+  const result = checkResult(state.board);
+  if (result) { endGame(result); return; }
 
   state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
   updateTurnIndicator();
@@ -139,58 +223,67 @@ function handleMove(idx) {
   // AI turn
   if (state.mode === 'ai' && state.currentPlayer === 'O' && state.gameActive) {
     state.aiThinking = true;
+    const delay = state.boardSize === 3 ? 350 : 500;
     setTimeout(() => {
       const aiIdx = getAIMove();
       placeMarker(aiIdx, 'O');
       state.aiThinking = false;
 
-      const aiResult = checkResult();
-      if (aiResult) {
-        endGame(aiResult);
-        return;
-      }
+      const aiResult = checkResult(state.board);
+      if (aiResult) { endGame(aiResult); return; }
 
       state.currentPlayer = 'X';
       updateTurnIndicator();
-    }, 350);
+    }, delay);
   }
 }
 
-// --- Place Marker ---
 function placeMarker(idx, player) {
   state.board[idx] = player;
+  const cells = getCells();
   const cell = cells[idx];
   cell.textContent = player;
   cell.classList.add(player.toLowerCase(), 'taken');
 }
 
-// --- Check Result ---
-function checkResult() {
-  for (const [a, b, c] of WINNING_LINES) {
-    if (
-      state.board[a] &&
-      state.board[a] === state.board[b] &&
-      state.board[a] === state.board[c]
-    ) {
-      return { winner: state.board[a], line: [a, b, c] };
+// ============================================================
+// WIN / DRAW DETECTION
+// ============================================================
+
+function checkResult(board) {
+  for (const line of state.winningLines) {
+    const first = board[line[0]];
+    if (first && line.every(idx => board[idx] === first)) {
+      return { winner: first, line };
     }
   }
-  if (state.board.every(cell => cell !== null)) {
+  if (board.every(cell => cell !== null)) {
     return { winner: null, line: [] }; // draw
   }
   return null;
 }
 
-// --- End Game ---
+// Lightweight version that returns winner string / 'draw' / null
+function checkBoardResult(board) {
+  for (const line of state.winningLines) {
+    const first = board[line[0]];
+    if (first && line.every(idx => board[idx] === first)) return first;
+  }
+  if (board.every(c => c !== null)) return 'draw';
+  return null;
+}
+
+// ============================================================
+// END GAME
+// ============================================================
+
 function endGame(result) {
   state.gameActive = false;
+  const cells = getCells();
 
   if (result.winner) {
     result.line.forEach(idx => cells[idx].classList.add('win'));
     state.scores[result.winner]++;
-
-    const isAI = state.mode === 'ai' && result.winner === 'O';
-    const isPlayer = state.mode === 'ai' && result.winner === 'X';
 
     resultIcon.textContent = result.winner === 'X' ? '✕' : '○';
     resultIcon.style.color = result.winner === 'X'
@@ -200,7 +293,7 @@ function endGame(result) {
     if (state.mode === 'pvp') {
       resultMsg.textContent = `Player ${result.winner} Wins!`;
     } else {
-      resultMsg.textContent = isAI ? 'AI Wins!' : 'You Win!';
+      resultMsg.textContent = result.winner === 'O' ? 'AI Wins!' : 'You Win!';
     }
   } else {
     state.scores.Draw++;
@@ -210,28 +303,23 @@ function endGame(result) {
   }
 
   updateScoreDisplay();
-
-  setTimeout(() => {
-    resultOverlay.classList.remove('hidden');
-  }, 400);
+  setTimeout(() => resultOverlay.classList.remove('hidden'), 400);
 }
 
-// --- Update Turn Indicator ---
+// ============================================================
+// UI HELPERS
+// ============================================================
+
 function updateTurnIndicator() {
   turnX.className = 'turn-indicator';
   turnO.className = 'turn-indicator';
-
-  if (state.currentPlayer === 'X') {
-    turnX.classList.add('active-x');
-  } else {
-    turnO.classList.add('active-o');
-  }
+  if (state.currentPlayer === 'X') turnX.classList.add('active-x');
+  else turnO.classList.add('active-o');
 }
 
-// --- Update Score Display ---
 function updateScoreDisplay() {
-  scoreX.textContent   = state.scores.X;
-  scoreO.textContent   = state.scores.O;
+  scoreX.textContent    = state.scores.X;
+  scoreO.textContent    = state.scores.O;
   scoreDraw.textContent = state.scores.Draw;
 }
 
@@ -248,106 +336,184 @@ function getAIMove() {
   }
 }
 
-// Easy: Fully random
+// --- Easy: Random ---
 function getEasyMove() {
   const empty = getEmptyCells(state.board);
   return empty[Math.floor(Math.random() * empty.length)];
 }
 
-// Medium: Win if possible, block if possible, else random
+// --- Medium: Win → Block → Prefer center area → Random ---
 function getMediumMove() {
-  // Try to win
-  const winMove = findThreat(state.board, 'O');
-  if (winMove !== -1) return winMove;
+  // Win immediately
+  const win = findImmediateThreat(state.board, 'O');
+  if (win !== -1) return win;
 
-  // Try to block
-  const blockMove = findThreat(state.board, 'X');
-  if (blockMove !== -1) return blockMove;
+  // Block player from winning
+  const block = findImmediateThreat(state.board, 'X');
+  if (block !== -1) return block;
 
-  // Take center if open
-  if (!state.board[4]) return 4;
+  // Prefer center-ish cells on larger boards
+  const n = state.boardSize;
+  const center = Math.floor((n * n) / 2);
+  if (!state.board[center]) return center;
 
-  // Random
+  // Take a strategic cell (near existing O's)
+  const strategic = getStrategicMove('O');
+  if (strategic !== -1) return strategic;
+
   return getEasyMove();
 }
 
-// Hard: Minimax (unbeatable)
+// --- Hard: Minimax with depth limit for larger boards ---
 function getHardMove() {
-  let bestScore = -Infinity;
-  let bestMove = -1;
+  const n = state.boardSize;
 
-  for (let i = 0; i < 9; i++) {
-    if (!state.board[i]) {
-      const boardCopy = [...state.board];
-      boardCopy[i] = 'O';
-      const score = minimax(boardCopy, 0, false, -Infinity, Infinity);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = i;
-      }
+  // Depth limits: 3×3 exhaustive, 4×4 limited, 5×5 more limited
+  const depthLimit = n === 3 ? 9 : n === 4 ? 4 : 3;
+
+  // On larger boards, check immediate win/block first for speed
+  if (n > 3) {
+    const win = findImmediateThreat(state.board, 'O');
+    if (win !== -1) return win;
+
+    const block = findImmediateThreat(state.board, 'X');
+    if (block !== -1) return block;
+  }
+
+  let bestScore = -Infinity;
+  let bestMove  = -1;
+  const empty = getEmptyCells(state.board);
+
+  // On large boards, prioritize cells near existing marks (reduces branching)
+  const candidates = n > 3
+    ? prioritizeCells(state.board, empty, n)
+    : empty;
+
+  for (const i of candidates) {
+    const boardCopy = [...state.board];
+    boardCopy[i] = 'O';
+    const score = minimax(boardCopy, 0, false, -Infinity, Infinity, depthLimit);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove  = i;
     }
   }
-  return bestMove;
+
+  return bestMove !== -1 ? bestMove : getEasyMove();
 }
 
-function minimax(board, depth, isMaximizing, alpha, beta) {
+function minimax(board, depth, isMaximizing, alpha, beta, maxDepth) {
   const result = checkBoardResult(board);
   if (result !== null) {
-    if (result === 'O') return 10 - depth;
-    if (result === 'X') return depth - 10;
-    return 0; // draw
+    if (result === 'O') return 100 - depth;
+    if (result === 'X') return depth - 100;
+    return 0;
   }
+  if (depth >= maxDepth) return evaluateBoard(board);
+
+  const empty = getEmptyCells(board);
 
   if (isMaximizing) {
     let maxScore = -Infinity;
-    for (let i = 0; i < 9; i++) {
-      if (!board[i]) {
-        board[i] = 'O';
-        const score = minimax(board, depth + 1, false, alpha, beta);
-        board[i] = null;
-        maxScore = Math.max(maxScore, score);
-        alpha = Math.max(alpha, score);
-        if (beta <= alpha) break;
-      }
+    for (const i of empty) {
+      board[i] = 'O';
+      const score = minimax(board, depth + 1, false, alpha, beta, maxDepth);
+      board[i] = null;
+      maxScore = Math.max(maxScore, score);
+      alpha = Math.max(alpha, score);
+      if (beta <= alpha) break;
     }
     return maxScore;
   } else {
     let minScore = Infinity;
-    for (let i = 0; i < 9; i++) {
-      if (!board[i]) {
-        board[i] = 'X';
-        const score = minimax(board, depth + 1, true, alpha, beta);
-        board[i] = null;
-        minScore = Math.min(minScore, score);
-        beta = Math.min(beta, score);
-        if (beta <= alpha) break;
-      }
+    for (const i of empty) {
+      board[i] = 'X';
+      const score = minimax(board, depth + 1, true, alpha, beta, maxDepth);
+      board[i] = null;
+      minScore = Math.min(minScore, score);
+      beta = Math.min(beta, score);
+      if (beta <= alpha) break;
     }
     return minScore;
   }
 }
 
-// Returns winner string, 'draw', or null (game ongoing)
-function checkBoardResult(board) {
-  for (const [a, b, c] of WINNING_LINES) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a];
-    }
+// Heuristic board evaluation for depth-limited search on large boards
+function evaluateBoard(board) {
+  let score = 0;
+  for (const line of state.winningLines) {
+    const vals = line.map(i => board[i]);
+    const oCount = vals.filter(v => v === 'O').length;
+    const xCount = vals.filter(v => v === 'X').length;
+    const empty  = vals.filter(v => v === null).length;
+
+    if (xCount === 0 && oCount > 0) score += oCount * oCount;
+    if (oCount === 0 && xCount > 0) score -= xCount * xCount;
   }
-  if (board.every(cell => cell !== null)) return 'draw';
-  return null;
+  return score;
 }
 
-// Find a winning/blocking move for a given player
-function findThreat(board, player) {
-  for (const [a, b, c] of WINNING_LINES) {
-    const line = [board[a], board[b], board[c]];
-    const indices = [a, b, c];
-    const playerCount = line.filter(v => v === player).length;
-    const emptyCount = line.filter(v => v === null).length;
+// For medium: find a cell that builds a consecutive run (not immediate win)
+function getStrategicMove(player) {
+  let bestIdx = -1;
+  let bestCount = 0;
 
-    if (playerCount === 2 && emptyCount === 1) {
-      return indices[line.indexOf(null)];
+  for (const line of state.winningLines) {
+    const vals = line.map(i => state.board[i]);
+    const pCount = vals.filter(v => v === player).length;
+    const eCount = vals.filter(v => v === null).length;
+
+    if (pCount > 0 && eCount > 0 && pCount > bestCount) {
+      const emptyIdx = line[vals.indexOf(null)];
+      if (!state.board[emptyIdx]) {
+        bestIdx = emptyIdx;
+        bestCount = pCount;
+      }
+    }
+  }
+  return bestIdx;
+}
+
+// On larger boards: prioritize cells adjacent to existing marks
+function prioritizeCells(board, empty, n) {
+  const hasMarks = board.some(c => c !== null);
+  if (!hasMarks) {
+    // Start near center
+    const center = Math.floor((n * n) / 2);
+    return [center, ...empty.filter(i => i !== center)];
+  }
+
+  const adjacent = new Set();
+  for (let i = 0; i < board.length; i++) {
+    if (!board[i]) continue;
+    const r = Math.floor(i / n), c = i % n;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+          const ni = nr * n + nc;
+          if (!board[ni]) adjacent.add(ni);
+        }
+      }
+    }
+  }
+
+  const adjacentList = [...adjacent];
+  const rest = empty.filter(i => !adjacent.has(i));
+  return [...adjacentList, ...rest];
+}
+
+// Find an immediately winning/blocking cell for a given player
+function findImmediateThreat(board, player) {
+  for (const line of state.winningLines) {
+    const vals    = line.map(i => board[i]);
+    const pCount  = vals.filter(v => v === player).length;
+    const eCount  = vals.filter(v => v === null).length;
+
+    if (pCount === state.winTarget - 1 && eCount === 1) {
+      const emptyIdx = line[vals.indexOf(null)];
+      if (!board[emptyIdx]) return emptyIdx;
     }
   }
   return -1;
@@ -360,7 +526,6 @@ function getEmptyCells(board) {
   }, []);
 }
 
-// --- Utility ---
 function capitalize(str) {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
