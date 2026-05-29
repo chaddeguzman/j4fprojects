@@ -22,7 +22,7 @@
       <div class="header-sub">A game of wits and patience.</div>
     </header>
 
-    <!-- Mode Selection Screen -->
+    <!-- Screen 1: Mode Selection -->
     <div class="screen" id="screen-mode">
       <div class="screen-inner">
         <p class="screen-label">01 — Choose Mode</p>
@@ -39,14 +39,60 @@
             <p>Take on the machine. Pick your difficulty.</p>
           </button>
         </div>
-        <a href="../" class="btn-back portfolio-link">← Back to Portfolio</a>
       </div>
     </div>
 
-    <!-- Difficulty Selection Screen -->
+    <!-- Screen 2: Board Size Selection -->
+    <div class="screen hidden" id="screen-size">
+      <div class="screen-inner">
+        <p class="screen-label">02 — Board Size</p>
+        <h2 class="screen-heading">Pick your<br>battleground.</h2>
+        <div class="size-cards">
+          <button class="size-card" data-size="3">
+            <div class="size-preview size-preview--3">
+              <span></span><span></span><span></span>
+              <span></span><span></span><span></span>
+              <span></span><span></span><span></span>
+            </div>
+            <div class="size-info">
+              <span class="size-label">3 × 3</span>
+              <span class="size-desc">Classic. First 3 in a row wins.</span>
+            </div>
+          </button>
+          <button class="size-card" data-size="4">
+            <div class="size-preview size-preview--4">
+              <span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="size-info">
+              <span class="size-label">4 × 4</span>
+              <span class="size-desc">Extended. First 4 in a row wins.</span>
+            </div>
+          </button>
+          <button class="size-card" data-size="5">
+            <div class="size-preview size-preview--5">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="size-info">
+              <span class="size-label">5 × 5</span>
+              <span class="size-desc">Grand. First 4 in a row wins.</span>
+            </div>
+          </button>
+        </div>
+        <button class="btn-back" id="back-size-to-mode">← Back</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Difficulty Selection (AI only) -->
     <div class="screen hidden" id="screen-difficulty">
       <div class="screen-inner">
-        <p class="screen-label">02 — Difficulty</p>
+        <p class="screen-label">03 — Difficulty</p>
         <h2 class="screen-heading">Choose your<br>challenge.</h2>
         <div class="diff-cards">
           <button class="diff-card" data-diff="easy">
@@ -59,14 +105,14 @@
           </button>
           <button class="diff-card" data-diff="hard">
             <span class="diff-label">Hard</span>
-            <span class="diff-desc">Unbeatable. The AI never loses.</span>
+            <span class="diff-desc">Ruthless. The AI rarely loses.</span>
           </button>
         </div>
-        <button class="btn-back" id="back-to-mode">← Back</button>
+        <button class="btn-back" id="back-diff-to-size">← Back</button>
       </div>
     </div>
 
-    <!-- Game Screen -->
+    <!-- Screen 4: Game -->
     <div class="screen hidden" id="screen-game">
       <div class="game-layout">
 
@@ -97,30 +143,25 @@
           </div>
         </div>
 
-        <!-- Board -->
-        <div class="board" id="board">
-          <div class="cell" data-index="0"></div>
-          <div class="cell" data-index="1"></div>
-          <div class="cell" data-index="2"></div>
-          <div class="cell" data-index="3"></div>
-          <div class="cell" data-index="4"></div>
-          <div class="cell" data-index="5"></div>
-          <div class="cell" data-index="6"></div>
-          <div class="cell" data-index="7"></div>
-          <div class="cell" data-index="8"></div>
-        </div>
+        <!-- Board (dynamically rendered by JS) -->
+        <div class="board-wrap">
+          <div class="board" id="board"></div>
 
-        <!-- Result Overlay -->
-        <div class="result-overlay hidden" id="result-overlay">
-          <div class="result-box">
-            <div class="result-icon" id="result-icon">✕</div>
-            <div class="result-msg" id="result-msg">Player X Wins!</div>
-            <div class="result-actions">
-              <button class="btn btn-primary" id="btn-rematch">Rematch</button>
-              <button class="btn btn-ghost" id="btn-back-menu">Main Menu</button>
+          <!-- Result Overlay -->
+          <div class="result-overlay hidden" id="result-overlay">
+            <div class="result-box">
+              <div class="result-icon" id="result-icon">✕</div>
+              <div class="result-msg" id="result-msg">Player X Wins!</div>
+              <div class="result-actions">
+                <button class="btn btn-primary" id="btn-rematch">Rematch</button>
+                <button class="btn btn-ghost" id="btn-back-menu">Main Menu</button>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Win condition note -->
+        <div class="win-note" id="win-note"></div>
 
       </div>
     </div>
