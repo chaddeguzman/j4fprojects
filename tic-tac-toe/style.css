@@ -474,45 +474,55 @@ body {
 /* --- Cells --- */
 .cell {
   background: var(--surface-alt);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  font-family: var(--font-display);
-  font-weight: 400;
-  color: transparent;
-  transition: background 0.2s ease;
   position: relative;
   user-select: none;
   -webkit-user-select: none;
-  /* font-size driven by JS class */
+  transition: background 0.2s ease;
+  /* CRITICAL: overflow hidden keeps any animation inside the cell box */
+  overflow: hidden;
 }
 
-/* Font sizes per board size */
-.board.size-3 .cell { font-size: clamp(1.8rem, 9vw, 3.8rem); }
-.board.size-4 .cell { font-size: clamp(1.2rem, 6vw, 2.6rem); }
-.board.size-5 .cell { font-size: clamp(0.9rem, 4.5vw, 2rem); }
+/* The marker letter is absolutely positioned so it NEVER affects cell dimensions */
+.cell::before {
+  content: attr(data-mark);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 400;
+  /* opacity starts at 0; animation drives it to 1 */
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Font sizes per board size — applied to ::before, not the cell itself */
+.board.size-3 .cell::before { font-size: clamp(1.8rem, 9vw, 3.8rem); }
+.board.size-4 .cell::before { font-size: clamp(1.2rem, 6vw, 2.6rem); }
+.board.size-5 .cell::before { font-size: clamp(0.9rem, 4.5vw, 2rem); }
 
 .cell:hover:not(.taken) { background: var(--accent-glow); }
 
-.cell.x {
+/* X marker */
+.cell.x::before {
   color: var(--x-color);
   text-shadow: 0 0 20px rgba(168,212,168,0.3);
-  animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: markReveal 0.2s ease forwards;
 }
 
-.cell.o {
+/* O marker */
+.cell.o::before {
   color: var(--o-color);
   text-shadow: 0 0 20px rgba(212,196,168,0.3);
-  animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: markReveal 0.2s ease forwards;
 }
 
-.cell.win {
-  background: var(--win-glow);
-}
+.cell.win { background: var(--win-glow); }
 
-.cell.win.x { text-shadow: 0 0 30px rgba(168,212,168,0.6); }
-.cell.win.o { text-shadow: 0 0 30px rgba(212,196,168,0.6); }
+.cell.win.x::before { text-shadow: 0 0 30px rgba(168,212,168,0.6); }
+.cell.win.o::before { text-shadow: 0 0 30px rgba(212,196,168,0.6); }
 
 .cell.taken { cursor: default; }
 
@@ -644,9 +654,9 @@ body {
   to   { opacity: 1; }
 }
 
-@keyframes popIn {
-  from { transform: scale(0.5); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+@keyframes markReveal {
+  from { opacity: 0; filter: blur(6px); }
+  to   { opacity: 1; filter: blur(0); }
 }
 
 /* --- Responsive --- */
