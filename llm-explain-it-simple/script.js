@@ -1,11 +1,10 @@
 // --- Dynamic Footer Year ---
 document.getElementById('year').textContent = new Date().getFullYear();
 
-
 // --- YOUR GOOGLE GEMINI API KEY ---
 // Get a free key at: https://aistudio.google.com/apikey
 const API_KEY = 'AQ.Ab8RN6LDtLpoTobdUnxQ9AyJ1kLyUc9CyPdXYgJ_hmQa_szKQA';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 
 // --- Enter Key Trigger ---
@@ -87,7 +86,8 @@ async function fetchExplanation(term, audience) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-goog-api-key': API_KEY
     },
     body: JSON.stringify({
       contents: [
