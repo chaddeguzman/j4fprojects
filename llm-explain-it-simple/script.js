@@ -1,10 +1,12 @@
 // --- Dynamic Footer Year ---
 document.getElementById('year').textContent = new Date().getFullYear();
 
+
 // --- YOUR GOOGLE GEMINI API KEY ---
-// Free key at: https://aistudio.google.com/apikey
+// Get a free key at: https://aistudio.google.com/apikey
 const API_KEY = 'AQ.Ab8RN6LDtLpoTobdUnxQ9AyJ1kLyUc9CyPdXYgJ_hmQa_szKQA';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
 
 // --- Enter Key Trigger ---
 const input = document.getElementById('termInput');
@@ -12,11 +14,13 @@ input.addEventListener('keydown', e => {
   if (e.key === 'Enter') explain();
 });
 
+
 // --- Example Chip Setter ---
 function setExample(term) {
   input.value = term;
   input.focus();
 }
+
 
 // --- Loading HTML Helper ---
 function loadingHTML(label) {
@@ -25,6 +29,7 @@ function loadingHTML(label) {
     ${label}
   </span>`;
 }
+
 
 // --- Main Explain Function ---
 async function explain() {
@@ -70,6 +75,7 @@ async function explain() {
   btn.disabled    = false;
   btn.textContent = 'Explain It ↓';
 }
+
 
 // --- API Call per Audience ---
 async function fetchExplanation(term, audience) {
