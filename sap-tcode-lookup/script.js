@@ -1,6 +1,10 @@
 // --- Dynamic Footer Year ---
 document.getElementById('year').textContent = new Date().getFullYear();
 
+// --- YOUR GOOGLE GEMINI API KEY ---
+// Free key at: https://aistudio.google.com/apikey
+const API_KEY = 'your-gemini-api-key-here';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
 // --- Input: Auto-Uppercase & Enter Key ---
 const input = document.getElementById('tcodeInput');
@@ -13,13 +17,11 @@ input.addEventListener('keydown', e => {
   if (e.key === 'Enter') lookup();
 });
 
-
 // --- Example Chip Setter ---
 function setExample(tcode) {
   input.value = tcode;
   input.focus();
 }
-
 
 // --- Loading Dots HTML Helper ---
 function loadingDots(label) {
@@ -28,7 +30,6 @@ function loadingDots(label) {
     ${label}
   </span>`;
 }
-
 
 // --- Reset All Fields to Loading State ---
 function setLoadingState(tcode) {
@@ -40,7 +41,6 @@ function setLoadingState(tcode) {
   document.getElementById('detailUsecase').innerHTML      = loadingDots('Fetching use case...');
   document.getElementById('detailAbap').innerHTML         = loadingDots('Fetching program...');
 }
-
 
 // --- Render Results into DOM ---
 function renderResult(info) {
@@ -54,7 +54,6 @@ function renderResult(info) {
     `<code>${info.abap_program || '—'}</code><br>${info.abap_note || ''}`;
 }
 
-
 // --- Render Error State ---
 function renderError() {
   document.getElementById('headerWhat').textContent     = 'Error fetching data.';
@@ -65,8 +64,7 @@ function renderError() {
   document.getElementById('detailAbap').textContent     = '—';
 }
 
-
-// --- Build Claude API Prompt ---
+// --- Build Gemini Prompt ---
 function buildPrompt(tcode) {
   return `You are an SAP expert. The user wants to look up the SAP transaction code: "${tcode}".
 
@@ -87,7 +85,6 @@ Use this exact structure:
 If the t-code is invalid or unknown, still return the JSON but set short_description to "Unknown or unrecognized T-Code" and leave other fields as empty strings.`;
 }
 
-
 // --- Main Lookup Function ---
 async function lookup() {
   const tcode = input.value.trim().toUpperCase();
@@ -105,24 +102,35 @@ async function lookup() {
   wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: buildPrompt(tcode) }]
+        contents: [
+          {
+            parts: [{ text: buildPrompt(tcode) }]
+          }
+        ]
       })
     });
 
+    if (!response.ok) {
+      const errData = await response.json();
+      console.error('API error:', errData);
+      throw new Error(errData?.error?.message || 'API request failed');
+    }
+
     const data  = await response.json();
-    const raw   = data.content?.[0]?.text || '{}';
+    const raw   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
     const clean = raw.replace(/```json|```/g, '').trim();
     const info  = JSON.parse(clean);
 
     renderResult(info);
 
   } catch (err) {
+    console.error('Lookup error:', err);
     renderError();
   }
 
