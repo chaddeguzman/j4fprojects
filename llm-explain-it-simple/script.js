@@ -3,7 +3,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
 // Free key at: https://aistudio.google.com/apikey
-const API_KEY = 'your-gemini-api-key-here';
+const API_KEY = 'AQ.Ab8RN6LDtLpoTobdUnxQ9AyJ1kLyUc9CyPdXYgJ_hmQa_szKQA';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
 // --- Enter Key Trigger ---
