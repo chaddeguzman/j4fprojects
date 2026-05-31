@@ -1,6 +1,10 @@
 // --- Dynamic Footer Year ---
 document.getElementById('year').textContent = new Date().getFullYear();
 
+// --- YOUR GOOGLE GEMINI API KEY ---
+// Free key at: https://aistudio.google.com/apikey
+const API_KEY = 'your-gemini-api-key-here';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
 // --- Enter Key Trigger ---
 const input = document.getElementById('termInput');
@@ -8,13 +12,11 @@ input.addEventListener('keydown', e => {
   if (e.key === 'Enter') explain();
 });
 
-
 // --- Example Chip Setter ---
 function setExample(term) {
   input.value = term;
   input.focus();
 }
-
 
 // --- Loading HTML Helper ---
 function loadingHTML(label) {
@@ -23,7 +25,6 @@ function loadingHTML(label) {
     ${label}
   </span>`;
 }
-
 
 // --- Main Explain Function ---
 async function explain() {
@@ -70,7 +71,6 @@ async function explain() {
   btn.textContent = 'Explain It ↓';
 }
 
-
 // --- API Call per Audience ---
 async function fetchExplanation(term, audience) {
   const prompts = {
@@ -78,16 +78,17 @@ async function fetchExplanation(term, audience) {
     teen: `You are explaining a tech concept to a 15-year-old teenager who is curious but not technical. Use a relatable analogy (like apps, school, social media, or everyday life), mention why it matters, and keep it under 100 words. Be conversational and clear. No bullet points. Just one short paragraph. Explain: "${term}"`
   };
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true'
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompts[audience] }]
+      contents: [
+        {
+          parts: [{ text: prompts[audience] }]
+        }
+      ]
     })
   });
 
@@ -98,5 +99,5 @@ async function fetchExplanation(term, audience) {
   }
 
   const data = await response.json();
-  return data.content?.[0]?.text || 'Could not generate explanation.';
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not generate explanation.';
 }
