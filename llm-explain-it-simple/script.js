@@ -4,7 +4,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 // --- YOUR GOOGLE GEMINI API KEY ---
 // backup: /gemini-2.5-flash:generateContent?key=${API_KEY}
 const API_KEY = 'AQ.Ab8RN6IXR0MTLHRE7vXfre-VwCRVRtakXZ_dZ75iv99n0Xeo6w';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
 
 // --- Enter Key Trigger ---
 const input = document.getElementById('termInput');
