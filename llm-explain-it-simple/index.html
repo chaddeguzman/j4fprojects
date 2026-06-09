@@ -48,7 +48,10 @@
 
   <!-- Results -->
   <div class="results" id="results">
-    <div class="results-term" id="resultsTerm"></div>
+    <div class="results-header">
+      <div class="results-term" id="resultsTerm"></div>
+      <button class="clear-btn" id="clearBtn" onclick="clearChat()">Clear Chat</button>
+    </div>
     <div class="cards-grid">
 
       <div class="explain-card">
@@ -56,11 +59,10 @@
           <span class="card-emoji">🧒</span>
           <span class="card-age">Age 10 — Kid</span>
         </div>
-        <div class="card-text" id="kidText">
-          <span class="loading">
-            <span class="dots"><span></span><span></span><span></span></span>
-            Thinking like a kid...
-          </span>
+        <div class="chat-container" id="kidChat"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="kidInput" type="text" placeholder="Ask a follow-up..." autocomplete="off" />
+          <button class="chat-send-btn" onclick="sendChatMessage('kid')">Send</button>
         </div>
       </div>
 
@@ -69,11 +71,10 @@
           <span class="card-emoji">🧑‍🎓</span>
           <span class="card-age">Age 15 — Teen</span>
         </div>
-        <div class="card-text" id="teenText">
-          <span class="loading">
-            <span class="dots"><span></span><span></span><span></span></span>
-            Thinking like a teen...
-          </span>
+        <div class="chat-container" id="teenChat"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="teenInput" type="text" placeholder="Ask a follow-up..." autocomplete="off" />
+          <button class="chat-send-btn" onclick="sendChatMessage('teen')">Send</button>
         </div>
       </div>
 
