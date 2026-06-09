@@ -4,7 +4,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 // --- YOUR GOOGLE GEMINI API KEY ---
 // backup: /gemini-2.5-flash:generateContent?key=${API_KEY}
 const API_KEY = 'AQ.Ab8RN6Jw5ibPEvf8QmYjqyiR_NL9JWuD_-HTE6wh_5I2586wBQ';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
 
 // --- Enter Key Trigger ---
 const input = document.getElementById('termInput');
@@ -85,7 +85,8 @@ async function fetchExplanation(term, audience) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`
     },
     body: JSON.stringify({
       contents: [
