@@ -3,9 +3,8 @@ document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
 // Get a free key at: https://aistudio.google.com/apikey
-const API_KEY = 'AQ.Ab8RN6LDtLpoTobdUnxQ9AyJ1kLyUc9CyPdXYgJ_hmQa_szKQA';
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-
+const API_KEY = 'AQ.Ab8RN6Jw5ibPEvf8QmYjqyiR_NL9JWuD_-HTE6wh_5I2586wBQ';
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
 // --- Enter Key Trigger ---
 const input = document.getElementById('termInput');
