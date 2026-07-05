@@ -1,0 +1,31 @@
+# Local workflow inputs, outputs, and processed source files
+/1 inbound/*
+!/1 inbound/.gitkeep
+!/1 inbound/Done/
+/1 inbound/Done/*
+!/1 inbound/Done/.gitkeep
+
+/2 outbound/*
+!/2 outbound/.gitkeep
+
+# Runtime logs
+/5 harness/logs/*
+!/5 harness/logs/.gitkeep
+
+# Local environment and editor files
+.env
+.env.*
+*.local
+.vscode/
+.idea/
+
+# OS-generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+~$*
