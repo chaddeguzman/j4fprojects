@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Control Library documentation and workflow overview.">
+    <title>Control Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+            <a class="brand" href="#top" aria-label="Control Library home">
+                <span class="brand-mark" aria-hidden="true">CL</span>
+                <span>Control Library</span>
+            </a>
+            <div class="nav-actions">
+                <a href="#workflow">Workflow</a>
+                <a href="#library">Library</a>
+                <a href="#install">Install</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="top">
+        <section class="hero">
+            <div class="hero-content">
+                <p class="eyebrow">Local Codex document workflow</p>
+                <h1>Reusable skills, references, and templates for consistent Markdown outputs.</h1>
+                <p class="hero-copy">
+                    Control Library turns source files into structured documents by combining a selected skill,
+                    matched reference guidance, and gold-standard templates.
+                </p>
+                <div class="hero-actions" id="install">
+                    <button class="primary-action" type="button" data-copy="git clone https://github.com/chaddeguzman/j4fprojects.git">
+                        Copy Clone Command
+                    </button>
+                    <a class="secondary-action" href="https://github.com/chaddeguzman/j4fprojects/archive/refs/heads/main.zip">
+                        Download ZIP
+                    </a>
+                    <a class="ghost-action" href="https://github.com/chaddeguzman/j4fprojects/tree/main/control-library">
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+            <aside class="hero-panel" aria-label="Repository quick commands">
+                <div class="command-header">
+                    <span>Local setup</span>
+                    <button type="button" class="icon-button" data-copy-block="setup-code" aria-label="Copy setup commands">Copy</button>
+                </div>
+                <pre id="setup-code"><code>git clone https://github.com/chaddeguzman/j4fprojects.git
+cd j4fprojects/control-library
+Run Skill.bat</code></pre>
+            </aside>
+        </section>
+
+        <section class="section" aria-labelledby="quick-start-title">
+            <div class="section-heading">
+                <p class="eyebrow">Quick start</p>
+                <h2 id="quick-start-title">Run a document through the library</h2>
+            </div>
+            <div class="steps-grid">
+                <article class="step-card">
+                    <span class="step-number">1</span>
+                    <h3>Drop in a source file</h3>
+                    <p>Place supported text-readable files into <code>1 inbound/</code>.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">2</span>
+                    <h3>Run the harness</h3>
+                    <p>Double-click <code>Run Skill.bat</code> to start the local workflow.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">3</span>
+                    <h3>Choose a skill</h3>
+                    <p>Select the Markdown skill that describes the desired transformation.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">4</span>
+                    <h3>Review output</h3>
+                    <p>Find generated Markdown in <code>2 outbound/</code>; processed inputs move to <code>1 inbound/Done/</code>.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section workflow-section" id="workflow" aria-labelledby="workflow-title">
+            <div class="section-heading">
+                <p class="eyebrow">Master workflow</p>
+                <h2 id="workflow-title">How the Control Library works</h2>
+            </div>
+            <div class="flowchart" aria-label="Control Library workflow from source file to outbound document">
+                <div class="flow-node source">User source file<br><span>1 inbound/</span></div>
+                <div class="flow-arrow" aria-hidden="true"></div>
+                <div class="flow-node">Run harness<br><span>Run Skill.bat</span></div>
+                <div class="flow-arrow" aria-hidden="true"></div>
+                <div class="flow-node">Choose skill<br><span>6 skills/</span></div>
+                <div class="flow-arrow" aria-hidden="true"></div>
+                <div class="flow-node">Load references<br><span>3 references/</span></div>
+                <div class="flow-arrow" aria-hidden="true"></div>
+                <div class="flow-node">Cross-check template<br><span>4 templates/</span></div>
+                <div class="flow-branches">
+                    <div class="branch-card">Tech spec template</div>
+                    <div class="branch-card">Functional spec template</div>
+                    <div class="branch-card">Other matching template</div>
+                </div>
+                <div class="flow-arrow down" aria-hidden="true"></div>
+                <div class="flow-node output">Generate outbound Markdown<br><span>2 outbound/</span></div>
+                <div class="flow-arrow" aria-hidden="true"></div>
+                <div class="flow-node done">Move original and log run<br><span>Done/ and logs/</span></div>
+            </div>
+        </section>
+
+        <section class="section" id="library" aria-labelledby="library-title">
+            <div class="section-heading">
+                <p class="eyebrow">Library layers</p>
+                <h2 id="library-title">What each folder controls</h2>
+            </div>
+            <div class="folder-list">
+                <article>
+                    <h3><code>1 inbound/</code></h3>
+                    <p>Temporary source files waiting to be processed.</p>
+                </article>
+                <article>
+                    <h3><code>3 references/</code></h3>
+                    <p>Shared context, standards, examples, coding practices, and review guidance.</p>
+                </article>
+                <article>
+                    <h3><code>4 templates/</code></h3>
+                    <p>Gold-standard structures for tech specs, functional specs, and other reusable outputs.</p>
+                </article>
+                <article>
+                    <h3><code>6 skills/</code></h3>
+                    <p>Reusable Markdown instructions that tell Codex what kind of work to perform.</p>
+                </article>
+                <article>
+                    <h3><code>2 outbound/</code></h3>
+                    <p>Generated Markdown documents created from the source, skill, references, and template guidance.</p>
+                </article>
+                <article>
+                    <h3><code>5 harness/</code></h3>
+                    <p>Runner scripts and logs that coordinate the local workflow.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section install-panel" aria-labelledby="download-title">
+            <div>
+                <p class="eyebrow">Download or clone</p>
+                <h2 id="download-title">Install on a local workstation</h2>
+                <p>
+                    Clone the parent repository and open the <code>control-library</code> folder, or download the
+                    repository ZIP and extract it locally.
+                </p>
+            </div>
+            <div class="install-actions">
+                <button type="button" class="primary-action" data-copy="git clone https://github.com/chaddeguzman/j4fprojects.git">
+                    Copy Clone Command
+                </button>
+                <a class="secondary-action" href="https://github.com/chaddeguzman/j4fprojects/archive/refs/heads/main.zip">
+                    Download ZIP
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
