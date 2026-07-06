@@ -55,9 +55,9 @@ flowchart TD
 
 ## Matching Logic
 
-The harness should use the selected skill to find related Markdown files in both `3 references/` and `4 templates/`.
+The harness uses the selected skill to find related Markdown files in both `3 references/` and `4 templates/`.
 
-Matching should consider file name, first heading, `topics`, `applies_to`, and keyword overlap with the selected skill.
+Matching considers file name, first heading, `topics`, `applies_to`, and keyword overlap with the selected skill.
 
 ## Supported Source Files
 
