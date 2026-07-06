@@ -9,10 +9,11 @@ $InboundDir = Join-Path $ProjectRoot "1 inbound"
 $DoneDir = Join-Path $InboundDir "Done"
 $OutboundDir = Join-Path $ProjectRoot "2 outbound"
 $ReferenceDir = Join-Path $ProjectRoot "3 references"
+$TemplateDir = Join-Path $ProjectRoot "4 templates"
 $SkillsDir = Join-Path $ProjectRoot "6 skills"
 $LogDir = Join-Path $PSScriptRoot "logs"
 $SupportedExtensions = @(".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".log")
-$ReferenceExtensions = @(".md", ".markdown")
+$MarkdownExtensions = @(".md", ".markdown")
 $StopWords = @(
     "a", "an", "and", "are", "as", "be", "below", "by", "codex", "content", "create",
     "document", "file", "final", "for", "from", "generate", "how", "if", "in", "into",
@@ -79,7 +80,7 @@ function Get-ProjectRelativePath {
     return $fullPath
 }
 
-function ConvertTo-ReferenceKeywords {
+function ConvertTo-Keywords {
     param(
         [string]$Text
     )
@@ -101,12 +102,12 @@ function ConvertTo-ReferenceKeywords {
     )
 }
 
-function ConvertTo-ReferenceKey {
+function ConvertTo-Key {
     param(
         [string]$Text
     )
 
-    $keywords = @(ConvertTo-ReferenceKeywords -Text $Text)
+    $keywords = @(ConvertTo-Keywords -Text $Text)
     return ($keywords -join "")
 }
 
@@ -152,7 +153,7 @@ function Get-FirstMarkdownHeading {
     return ""
 }
 
-function Split-ReferenceMetadataList {
+function Split-MetadataList {
     param(
         [string]$Text
     )
@@ -168,42 +169,43 @@ function Split-ReferenceMetadataList {
     )
 }
 
-function Get-MatchingReferences {
+function Get-MatchingMarkdownFiles {
     param(
+        [string]$Directory,
         [System.IO.FileInfo]$Skill,
         [string]$SkillText
     )
 
-    if (-not (Test-Path -LiteralPath $ReferenceDir)) {
+    if (-not (Test-Path -LiteralPath $Directory)) {
         return @()
     }
 
     $skillHeading = Get-FirstMarkdownHeading -Text $SkillText
     $skillKeywords = @(
-        ConvertTo-ReferenceKeywords -Text $Skill.BaseName
-        ConvertTo-ReferenceKeywords -Text $skillHeading
-        ConvertTo-ReferenceKeywords -Text $SkillText
+        ConvertTo-Keywords -Text $Skill.BaseName
+        ConvertTo-Keywords -Text $skillHeading
+        ConvertTo-Keywords -Text $SkillText
     ) | Sort-Object -Unique
     $skillKeys = @(
-        ConvertTo-ReferenceKey -Text $Skill.BaseName
-        ConvertTo-ReferenceKey -Text $skillHeading
+        ConvertTo-Key -Text $Skill.BaseName
+        ConvertTo-Key -Text $skillHeading
     ) | Where-Object { $_ }
 
-    $references = @(
-        Get-ChildItem -LiteralPath $ReferenceDir -Recurse -File |
+    $items = @(
+        Get-ChildItem -LiteralPath $Directory -Recurse -File |
             Where-Object {
                 -not $_.Name.StartsWith(".") -and
-                $ReferenceExtensions -contains $_.Extension.ToLowerInvariant()
+                $MarkdownExtensions -contains $_.Extension.ToLowerInvariant()
             } |
             Sort-Object FullName
     )
 
     $matches = @()
-    foreach ($reference in $references) {
-        $referenceText = Get-Content -LiteralPath $reference.FullName -Raw -Encoding UTF8
-        $metadata = Get-FrontMatter -Text $referenceText
-        $referenceHeading = Get-FirstMarkdownHeading -Text $referenceText
-        $relativeReference = Get-ProjectRelativePath -Path $reference.FullName
+    foreach ($item in $items) {
+        $itemText = Get-Content -LiteralPath $item.FullName -Raw -Encoding UTF8
+        $metadata = Get-FrontMatter -Text $itemText
+        $itemHeading = Get-FirstMarkdownHeading -Text $itemText
+        $relativePath = Get-ProjectRelativePath -Path $item.FullName
 
         $appliesTo = ""
         if ($metadata.ContainsKey("applies_to")) {
@@ -215,39 +217,39 @@ function Get-MatchingReferences {
             $topicText = $metadata["topics"]
         }
 
-        $referenceKeywords = @(
-            ConvertTo-ReferenceKeywords -Text $reference.BaseName
-            ConvertTo-ReferenceKeywords -Text $relativeReference
-            ConvertTo-ReferenceKeywords -Text $referenceHeading
-            ConvertTo-ReferenceKeywords -Text $topicText
-            ConvertTo-ReferenceKeywords -Text $appliesTo
+        $itemKeywords = @(
+            ConvertTo-Keywords -Text $item.BaseName
+            ConvertTo-Keywords -Text $relativePath
+            ConvertTo-Keywords -Text $itemHeading
+            ConvertTo-Keywords -Text $topicText
+            ConvertTo-Keywords -Text $appliesTo
         ) | Sort-Object -Unique
 
         $appliesToKeys = @(
-            Split-ReferenceMetadataList -Text $appliesTo |
-                ForEach-Object { ConvertTo-ReferenceKey -Text $_ }
+            Split-MetadataList -Text $appliesTo |
+                ForEach-Object { ConvertTo-Key -Text $_ }
         )
 
-        $referenceKeys = @(
-            ConvertTo-ReferenceKey -Text $reference.BaseName
-            ConvertTo-ReferenceKey -Text $referenceHeading
+        $itemKeys = @(
+            ConvertTo-Key -Text $item.BaseName
+            ConvertTo-Key -Text $itemHeading
             $appliesToKeys
         ) | Where-Object { $_ }
 
         $explicitMatch = $false
         foreach ($skillKey in $skillKeys) {
-            if ($referenceKeys -contains $skillKey) {
+            if ($itemKeys -contains $skillKey) {
                 $explicitMatch = $true
                 break
             }
         }
 
-        $overlap = @($referenceKeywords | Where-Object { $skillKeywords -contains $_ })
+        $overlap = @($itemKeywords | Where-Object { $skillKeywords -contains $_ })
         if ($explicitMatch -or $overlap.Count -gt 0) {
             $matches += [PSCustomObject]@{
-                File = $reference
-                RelativePath = $relativeReference
-                Text = $referenceText
+                File = $item
+                RelativePath = $relativePath
+                Text = $itemText
             }
         }
     }
@@ -255,26 +257,28 @@ function Get-MatchingReferences {
     return $matches
 }
 
-function Format-ReferenceContext {
+function Format-MarkdownContext {
     param(
-        [array]$References
+        [array]$Items,
+        [string]$Label,
+        [string]$EmptyMessage
     )
 
-    if ($References.Count -eq 0) {
-        return "No matching reference files were found."
+    if ($Items.Count -eq 0) {
+        return $EmptyMessage
     }
 
     $blocks = @()
-    foreach ($reference in $References) {
+    foreach ($item in $Items) {
         $blocks += @(
-            "Reference file: $($reference.RelativePath)"
+            "$Label file: $($item.RelativePath)"
             '```markdown'
-            $reference.Text
+            $item.Text
             '```'
         ) -join [Environment]::NewLine
     }
 
-    return ($blocks -join ([Environment]::NewLine * 2))
+    return ($blocks -join ([Environment]::NewLine + [Environment]::NewLine))
 }
 
 function Select-Skill {
@@ -310,7 +314,8 @@ function Invoke-CodexTransform {
 
     $skillText = Get-Content -LiteralPath $SelectedSkill -Raw -Encoding UTF8
     $skillItem = Get-Item -LiteralPath $SelectedSkill
-    $matchingReferences = @(Get-MatchingReferences -Skill $skillItem -SkillText $skillText)
+
+    $matchingReferences = @(Get-MatchingMarkdownFiles -Directory $ReferenceDir -Skill $skillItem -SkillText $skillText)
     if ($matchingReferences.Count -eq 0) {
         Write-Log "No matching reference files found for skill: $($skillItem.BaseName)"
     }
@@ -319,7 +324,19 @@ function Invoke-CodexTransform {
             Write-Log "Included reference for $($skillItem.BaseName): $($reference.RelativePath)"
         }
     }
-    $referenceContext = Format-ReferenceContext -References $matchingReferences
+
+    $matchingTemplates = @(Get-MatchingMarkdownFiles -Directory $TemplateDir -Skill $skillItem -SkillText $skillText)
+    if ($matchingTemplates.Count -eq 0) {
+        Write-Log "No matching template files found for skill: $($skillItem.BaseName)"
+    }
+    else {
+        foreach ($template in $matchingTemplates) {
+            Write-Log "Included template for $($skillItem.BaseName): $($template.RelativePath)"
+        }
+    }
+
+    $referenceContext = Format-MarkdownContext -Items $matchingReferences -Label "Reference" -EmptyMessage "No matching reference files were found."
+    $templateContext = Format-MarkdownContext -Items $matchingTemplates -Label "Template" -EmptyMessage "No matching template files were found."
     $sourceText = Get-Content -LiteralPath $Source.FullName -Raw -Encoding UTF8
     $relativeSource = Get-ProjectRelativePath -Path $Source.FullName
     $relativeOutput = Get-ProjectRelativePath -Path $OutputPath
@@ -328,6 +345,9 @@ function Invoke-CodexTransform {
         "You are running a local document workflow."
         ""
         "Apply the selected skill to the source file content below."
+        ""
+        "Use the reference context for standards, examples, and shared guidance."
+        "Use the template context as the target document structure when relevant."
         ""
         "Return only the final Markdown document. Do not wrap it in code fences. Do not describe the process."
         ""
@@ -339,6 +359,9 @@ function Invoke-CodexTransform {
         ""
         "Reference context:"
         $referenceContext
+        ""
+        "Template context:"
+        $templateContext
         ""
         "Source file:"
         $relativeSource
