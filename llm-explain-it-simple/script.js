@@ -3,7 +3,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
 const API_KEY = '__LLM_EXPLAIN_KEY__';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 const API_KEY_PLACEHOLDERS = new Set(['', 'LLM_EXPLAIN_KEY', ['__', 'LLM_EXPLAIN_KEY', '__'].join('')]);
 
 // --- Conversation History ---
