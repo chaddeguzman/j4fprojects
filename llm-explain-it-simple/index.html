@@ -32,6 +32,11 @@
       <button class="audience-chip" type="button" data-audience="adult" onclick="setAudience('adult')">Adult</button>
     </div>
 
+    <div class="response-selector" aria-label="Choose response length">
+      <button class="response-chip selected" type="button" data-mode="full" onclick="setResponseMode('full')">Full</button>
+      <button class="response-chip" type="button" data-mode="tldr" onclick="setResponseMode('tldr')">TL;DR</button>
+    </div>
+
     <div class="input-row">
       <input
         class="term-input"

@@ -19,6 +19,18 @@ const audienceProfiles = {
   }
 };
 
+// --- Response Styles ---
+const responseModes = {
+  full: {
+    label: 'Full',
+    instruction: 'Give a clear, concise explanation with enough context to understand the idea.'
+  },
+  tldr: {
+    label: 'TL;DR',
+    instruction: 'Give only the gist. Keep it to 1-2 short sentences, avoid extra detail, and make it easy to skim.'
+  }
+};
+
 // --- DOM References ---
 const input = document.getElementById('termInput');
 const explainBtn = document.getElementById('explainBtn');
@@ -30,6 +42,7 @@ const chatInput = document.getElementById('chatInput');
 
 // --- Chat State ---
 let currentAudience = 'child';
+let currentResponseMode = 'full';
 let currentTopic = '';
 let chatHistory = [];
 
@@ -51,6 +64,15 @@ function setAudience(audience) {
 
   document.querySelectorAll('.audience-chip').forEach(button => {
     button.classList.toggle('selected', button.dataset.audience === currentAudience);
+  });
+}
+
+// --- Response Mode Selector ---
+function setResponseMode(mode) {
+  currentResponseMode = responseModes[mode] ? mode : 'full';
+
+  document.querySelectorAll('.response-chip').forEach(button => {
+    button.classList.toggle('selected', button.dataset.mode === currentResponseMode);
   });
 }
 
@@ -87,7 +109,7 @@ function addTypingIndicator() {
 }
 
 function getFoundationPrompt(term) {
-  return `${audienceProfiles[currentAudience].systemPrompt}\n\nExplain: "${term}"`;
+  return `${audienceProfiles[currentAudience].systemPrompt}\n${responseModes[currentResponseMode].instruction}\n\nExplain: "${term}"`;
 }
 
 function getApiKeyMessage() {
@@ -112,7 +134,7 @@ async function explain() {
   explainBtn.textContent = 'Thinking...';
 
   results.classList.add('visible');
-  resultsTerm.innerHTML = `Explaining for ${audienceProfiles[currentAudience].label}: <span>${term}</span>`;
+  resultsTerm.innerHTML = `${responseModes[currentResponseMode].label} for ${audienceProfiles[currentAudience].label}: <span>${term}</span>`;
   appendMessage('user', term);
 
   const typing = addTypingIndicator();
