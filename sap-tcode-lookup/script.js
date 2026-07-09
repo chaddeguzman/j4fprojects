@@ -1,29 +1,40 @@
-// --- Dynamic Footer Year ---
+const GEMINI_API_KEY_PLACEHOLDER = '__GEMINI_API_KEY__';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// --- YOUR GOOGLE GEMINI API KEY ---
-// Free key at: https://aistudio.google.com/apikey
-const API_KEY = 'GEMINI_API_KEY';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
-
-// --- Input: Auto-Uppercase & Enter Key ---
 const input = document.getElementById('tcodeInput');
+const lookupBtn = document.getElementById('lookupBtn');
+const resultWrap = document.getElementById('resultWrap');
 
 input.addEventListener('input', () => {
   input.value = input.value.toUpperCase();
 });
 
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter') lookup();
+input.addEventListener('keydown', event => {
+  if (event.key === 'Enter') lookup();
 });
 
-// --- Example Chip Setter ---
+function getGeminiApiKey() {
+  const configuredKey = window.SAP_TCODE_CONFIG?.geminiApiKey?.trim() || '';
+
+  if (!configuredKey || configuredKey === GEMINI_API_KEY_PLACEHOLDER || configuredKey === 'GEMINI_API_KEY') {
+    return '';
+  }
+
+  return configuredKey;
+}
+
+function getGeminiApiUrl(apiKey) {
+  const encodedKey = encodeURIComponent(apiKey);
+  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodedKey}`;
+}
+
 function setExample(tcode) {
   input.value = tcode;
   input.focus();
 }
 
-// --- Loading Dots HTML Helper ---
 function loadingDots(label) {
   return `<span class="loading">
     <span class="dots"><span></span><span></span><span></span></span>
@@ -31,44 +42,68 @@ function loadingDots(label) {
   </span>`;
 }
 
-// --- Reset All Fields to Loading State ---
 function setLoadingState(tcode) {
-  document.getElementById('badgeTcode').textContent       = tcode;
-  document.getElementById('headerWhat').innerHTML         = loadingDots('');
-  document.getElementById('headerModule').textContent     = 'Loading...';
-  document.getElementById('detailWhat').innerHTML         = loadingDots('Fetching details...');
-  document.getElementById('detailModule').innerHTML       = loadingDots('Fetching module...');
-  document.getElementById('detailUsecase').innerHTML      = loadingDots('Fetching use case...');
-  document.getElementById('detailAbap').innerHTML         = loadingDots('Fetching program...');
+  document.getElementById('badgeTcode').textContent = tcode;
+  document.getElementById('headerWhat').innerHTML = loadingDots('');
+  document.getElementById('headerModule').textContent = 'Loading...';
+  document.getElementById('detailWhat').innerHTML = loadingDots('Fetching details...');
+  document.getElementById('detailModule').innerHTML = loadingDots('Fetching module...');
+  document.getElementById('detailUsecase').innerHTML = loadingDots('Fetching use case...');
+  document.getElementById('detailAbap').innerHTML = loadingDots('Fetching program...');
 }
 
-// --- Render Results into DOM ---
+function setText(id, value, fallback = '-') {
+  document.getElementById(id).textContent = value || fallback;
+}
+
+function renderModule(info) {
+  const moduleEl = document.getElementById('detailModule');
+  moduleEl.textContent = '';
+
+  const codeEl = document.createElement('strong');
+  codeEl.style.color = 'var(--ink)';
+  codeEl.style.fontWeight = '500';
+  codeEl.textContent = info.module_code || '-';
+
+  moduleEl.append(codeEl, ` - ${info.module || '-'}`);
+}
+
+function renderAbap(info) {
+  const abapEl = document.getElementById('detailAbap');
+  abapEl.textContent = '';
+
+  const codeEl = document.createElement('code');
+  codeEl.textContent = info.abap_program || '-';
+
+  abapEl.append(codeEl);
+
+  if (info.abap_note) {
+    abapEl.append(document.createElement('br'), info.abap_note);
+  }
+}
+
 function renderResult(info) {
-  document.getElementById('headerWhat').textContent     = info.short_description || '—';
-  document.getElementById('headerModule').textContent   = info.module_code        || '—';
-  document.getElementById('detailWhat').textContent     = info.what_it_does       || '—';
-  document.getElementById('detailModule').innerHTML     =
-    `<strong style="color: var(--ink); font-weight: 500;">${info.module_code || '—'}</strong> — ${info.module || '—'}`;
-  document.getElementById('detailUsecase').textContent  = info.use_case           || '—';
-  document.getElementById('detailAbap').innerHTML       =
-    `<code>${info.abap_program || '—'}</code><br>${info.abap_note || ''}`;
+  setText('headerWhat', info.short_description);
+  setText('headerModule', info.module_code);
+  setText('detailWhat', info.what_it_does);
+  setText('detailUsecase', info.use_case);
+  renderModule(info);
+  renderAbap(info);
 }
 
-// --- Render Error State ---
-function renderError() {
-  document.getElementById('headerWhat').textContent     = 'Error fetching data.';
-  document.getElementById('headerModule').textContent   = '—';
-  document.getElementById('detailWhat').textContent     = 'Something went wrong. Please try again.';
-  document.getElementById('detailModule').textContent   = '—';
-  document.getElementById('detailUsecase').textContent  = '—';
-  document.getElementById('detailAbap').textContent     = '—';
+function renderError(message = 'Something went wrong. Please try again.') {
+  setText('headerWhat', 'Error fetching data.');
+  setText('headerModule', '-');
+  setText('detailWhat', message);
+  setText('detailModule', '-');
+  setText('detailUsecase', '-');
+  setText('detailAbap', '-');
 }
 
-// --- Build Gemini Prompt ---
 function buildPrompt(tcode) {
   return `You are an SAP expert. The user wants to look up the SAP transaction code: "${tcode}".
 
-Respond ONLY with a valid JSON object and nothing else. No markdown, no backticks, no explanation outside the JSON.
+Respond only with a valid JSON object. Do not include markdown, backticks, or explanation outside the JSON.
 
 Use this exact structure:
 {
@@ -85,24 +120,34 @@ Use this exact structure:
 If the t-code is invalid or unknown, still return the JSON but set short_description to "Unknown or unrecognized T-Code" and leave other fields as empty strings.`;
 }
 
-// --- Main Lookup Function ---
+function parseGeminiJson(data) {
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  const clean = raw.replace(/```json|```/gi, '').trim();
+  return JSON.parse(clean);
+}
+
 async function lookup() {
   const tcode = input.value.trim().toUpperCase();
   if (!tcode) return;
 
-  const btn  = document.getElementById('lookupBtn');
-  const wrap = document.getElementById('resultWrap');
+  const apiKey = getGeminiApiKey();
 
-  // Set loading state
-  btn.disabled    = true;
-  btn.textContent = 'Looking up...';
+  lookupBtn.disabled = true;
+  lookupBtn.textContent = 'Looking up...';
 
   setLoadingState(tcode);
-  wrap.classList.add('visible');
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  resultWrap.classList.add('visible');
+  resultWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (!apiKey) {
+    renderError('Gemini API key is not configured. Replace __GEMINI_API_KEY__ during your GitHub Pages deploy using the GEMINI_API_KEY secret.');
+    lookupBtn.disabled = false;
+    lookupBtn.textContent = 'Look Up \u2193';
+    return;
+  }
 
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(getGeminiApiUrl(apiKey), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -112,29 +157,27 @@ async function lookup() {
           {
             parts: [{ text: buildPrompt(tcode) }]
           }
-        ]
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2
+        }
       })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errData = await response.json();
-      console.error('API error:', errData);
-      throw new Error(errData?.error?.message || 'API request failed');
+      console.error('Gemini API error:', data);
+      throw new Error(data?.error?.message || 'Gemini API request failed.');
     }
 
-    const data  = await response.json();
-    const raw   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const info  = JSON.parse(clean);
-
-    renderResult(info);
-
-  } catch (err) {
-    console.error('Lookup error:', err);
-    renderError();
+    renderResult(parseGeminiJson(data));
+  } catch (error) {
+    console.error('Lookup error:', error);
+    renderError(error.message || 'Something went wrong. Please try again.');
   }
 
-  // Reset button
-  btn.disabled    = false;
-  btn.textContent = 'Look Up ↓';
+  lookupBtn.disabled = false;
+  lookupBtn.textContent = 'Look Up \u2193';
 }
