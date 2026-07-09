@@ -22,7 +22,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || vars.GEMINI_API_KEY }}
+      TCODE_API: ${{ secrets.TCODE_API || vars.TCODE_API }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,10 +30,10 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Inject Gemini API key
+      - name: Inject T-Code API key
         run: |
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is missing. Add it as a repository secret or variable."
+          if [ -z "$TCODE_API" ]; then
+            echo "TCODE_API is missing. Add it as a repository secret or variable."
             exit 1
           fi
 
@@ -43,7 +43,7 @@ jobs:
 
           script_path = Path("sap-tcode-lookup/script.js")
           script = script_path.read_text(encoding="utf-8")
-          script = script.replace("__GEMINI_API_KEY__", os.environ["GEMINI_API_KEY"])
+          script = script.replace("__TCODE_API__", os.environ["TCODE_API"])
           script_path.write_text(script, encoding="utf-8")
           PY
 

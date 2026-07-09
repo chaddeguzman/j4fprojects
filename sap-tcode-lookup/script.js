@@ -2,9 +2,9 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
-const API_KEY = '__GEMINI_API_KEY__';
+const API_KEY = '__TCODE_API__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', ['__', 'GEMINI_API_KEY', '__'].join('')]);
+const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', 'TCODE_API', ['__', 'TCODE_API', '__'].join('')]);
 
 // --- Input: Auto-Uppercase & Enter Key ---
 const input = document.getElementById('tcodeInput');
