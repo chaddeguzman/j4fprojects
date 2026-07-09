@@ -1,5 +1,5 @@
 const GEMINI_API_KEY_PLACEHOLDER = '__GEMINI_API_KEY__';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
