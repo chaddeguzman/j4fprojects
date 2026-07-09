@@ -4,6 +4,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 // --- YOUR GOOGLE GEMINI API KEY ---
 const API_KEY = '__GEMINI_API_KEY__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', '__GEMINI_API_KEY__']);
 
 // --- Input: Auto-Uppercase & Enter Key ---
 const input = document.getElementById('tcodeInput');
@@ -99,6 +100,13 @@ async function lookup() {
   setLoadingState(tcode);
   wrap.classList.add('visible');
   wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
+    renderError('Gemini API key is not configured. The GitHub Pages deploy must replace __GEMINI_API_KEY__ in sap-tcode-lookup/script.js.');
+    btn.disabled = false;
+    btn.textContent = 'Look Up \u2193';
+    return;
+  }
 
   try {
     const response = await fetch(API_URL, {

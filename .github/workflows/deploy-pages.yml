@@ -41,10 +41,10 @@ jobs:
           import os
           from pathlib import Path
 
-          index_path = Path("sap-tcode-lookup/index.html")
-          html = index_path.read_text(encoding="utf-8")
-          html = html.replace("__GEMINI_API_KEY__", os.environ["GEMINI_API_KEY"])
-          index_path.write_text(html, encoding="utf-8")
+          script_path = Path("sap-tcode-lookup/script.js")
+          script = script_path.read_text(encoding="utf-8")
+          script = script.replace("__GEMINI_API_KEY__", os.environ["GEMINI_API_KEY"])
+          script_path.write_text(script, encoding="utf-8")
           PY
 
       - name: Upload Pages artifact

@@ -1,6 +1,7 @@
 // --- YOUR GOOGLE GEMINI API KEY ---
-const API_KEY = 'GEMINI_API_KEY';
+const API_KEY = '__GEMINI_API_KEY__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', '__GEMINI_API_KEY__']);
 
 // --- Build Gemini Prompt ---
 function buildPrompt(userInput) {
@@ -24,6 +25,10 @@ function parseGeminiText(data) {
 
 // --- Main Gemini Function ---
 async function askGemini(prompt, options = {}) {
+  if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
+    throw new Error('Gemini API key is not configured. Replace __GEMINI_API_KEY__ before using gemini_api.js.');
+  }
+
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -116,6 +121,7 @@ function createGeminiChat(options = {}) {
 const GeminiApi = {
   API_KEY,
   API_URL,
+  API_KEY_PLACEHOLDERS,
   buildPrompt,
   askGemini,
   askGeminiText,
