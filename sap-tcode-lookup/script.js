@@ -1,4 +1,4 @@
-const GEMINI_API_KEY_PLACEHOLDER = '__GEMINI_API_KEY__';
+const GEMINI_API_KEY_PLACEHOLDER = '__GEMINI_API_KEY__'; //copy from secret variables for API Key value
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
 document.getElementById('year').textContent = new Date().getFullYear();
