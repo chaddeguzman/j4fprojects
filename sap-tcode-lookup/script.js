@@ -2,7 +2,7 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
-const API_KEY = 'GEMINI_API_KEY';
+const API_KEY = '__GEMINI_API_KEY__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
 // --- Input: Auto-Uppercase & Enter Key ---

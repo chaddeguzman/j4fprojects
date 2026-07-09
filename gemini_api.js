@@ -1,185 +1,134 @@
-/*
-  Reusable Gemini API helper for static websites and JavaScript apps.
+// --- YOUR GOOGLE GEMINI API KEY ---
+const API_KEY = 'GEMINI_API_KEY';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
-  Browser usage:
-    <script src="../gemini_api.js"></script>
-    const key = GeminiApi.getApiKey(window.MY_CONFIG);
-    const gemini = GeminiApi.createClient({ apiKey: key });
-    const reply = await gemini.generateText({ prompt: 'Hello' });
+// --- Build Gemini Prompt ---
+function buildPrompt(userInput) {
+  return `${userInput}`;
+}
 
-  Local Node or n8n Code node usage:
-    const GeminiApi = require('./gemini_api.js');
-    const gemini = GeminiApi.createClient({ apiKey: process.env.GEMINI_API_KEY });
-    const reply = await gemini.generateText({ prompt: 'Hello' });
+// --- Parse Gemini JSON Response ---
+function parseGeminiJson(data) {
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
 
-  Chatbot usage:
-    const chat = gemini.createChat({ systemInstruction: 'Be helpful and concise.' });
-    const reply = await chat.sendMessage('What can you do?');
-*/
-(function (global) {
-  const DEFAULT_MODEL = 'gemini-2.5-flash';
-  const DEFAULT_API_VERSION = 'v1beta';
-  const API_KEY_PLACEHOLDERS = new Set([
-    '',
-    '__GEMINI_API_KEY__',
-    'GEMINI_API_KEY'
-  ]);
+// --- Parse Gemini Text Response ---
+function parseGeminiText(data) {
+  return data?.candidates?.[0]?.content?.parts
+    ?.map(part => part.text || '')
+    .join('')
+    .trim() || '';
+}
 
-  function getApiKey(config, keyName = 'geminiApiKey') {
-    const configuredKey = config?.[keyName]?.trim?.() || '';
-    return API_KEY_PLACEHOLDERS.has(configuredKey) ? '' : configuredKey;
-  }
-
-  function getEnvironmentApiKey() {
-    if (typeof process === 'undefined') return '';
-    return process.env?.GEMINI_API_KEY?.trim?.() || '';
-  }
-
-  function resolveApiKey(options = {}) {
-    return getApiKey({ geminiApiKey: options.apiKey })
-      || getApiKey(options.config, options.keyName || 'geminiApiKey')
-      || getEnvironmentApiKey();
-  }
-
-  function buildGenerateContentUrl(apiKey, options = {}) {
-    const model = options.model || DEFAULT_MODEL;
-    const apiVersion = options.apiVersion || DEFAULT_API_VERSION;
-    const encodedKey = encodeURIComponent(apiKey);
-
-    return `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${encodedKey}`;
-  }
-
-  function getTextFromResponse(data) {
-    return data?.candidates?.[0]?.content?.parts
-      ?.map(part => part.text || '')
-      .join('')
-      .trim() || '';
-  }
-
-  function parseJsonText(text) {
-    const clean = text.replace(/```json|```/gi, '').trim();
-    return JSON.parse(clean);
-  }
-
-  function createError(message, response, data) {
-    const error = new Error(message);
-    error.status = response?.status;
-    error.statusText = response?.statusText;
-    error.data = data;
-    return error;
-  }
-
-  function createClient(options = {}) {
-    const apiKey = resolveApiKey(options);
-    const model = options.model || DEFAULT_MODEL;
-    const apiVersion = options.apiVersion || DEFAULT_API_VERSION;
-
-    async function generateContent(request = {}) {
-      if (!apiKey) {
-        throw createError('Gemini API key is not configured.');
-      }
-
-      const contents = request.contents || [
+// --- Main Gemini Function ---
+async function askGemini(prompt, options = {}) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [
         {
-          role: 'user',
-          parts: [{ text: request.prompt || '' }]
+          parts: [{ text: buildPrompt(prompt) }]
         }
-      ];
-
-      const body = {
-        contents,
-        generationConfig: {
-          temperature: 0.2,
-          ...(request.generationConfig || {})
-        }
-      };
-
-      if (request.systemInstruction) {
-        body.systemInstruction = {
-          parts: [{ text: request.systemInstruction }]
-        };
+      ],
+      generationConfig: {
+        temperature: options.temperature ?? 0.2,
+        ...(options.responseMimeType ? { responseMimeType: options.responseMimeType } : {})
       }
+    })
+  });
 
-      const response = await fetch(buildGenerateContentUrl(apiKey, { model, apiVersion }), {
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error('API error:', data);
+    throw new Error(data?.error?.message || 'API request failed');
+  }
+
+  return data;
+}
+
+// --- Main Gemini Text Function ---
+async function askGeminiText(prompt, options = {}) {
+  const data = await askGemini(prompt, options);
+  return parseGeminiText(data);
+}
+
+// --- Main Gemini JSON Function ---
+async function askGeminiJson(prompt, options = {}) {
+  const data = await askGemini(prompt, {
+    ...options,
+    responseMimeType: 'application/json'
+  });
+
+  return parseGeminiJson(data);
+}
+
+// --- Main Gemini Chat Function ---
+function createGeminiChat(options = {}) {
+  const history = [...(options.history || [])];
+
+  return {
+    history,
+    async sendMessage(message) {
+      history.push({
+        role: 'user',
+        parts: [{ text: message }]
+      });
+
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          contents: history,
+          generationConfig: {
+            temperature: options.temperature ?? 0.2
+          }
+        })
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json();
 
       if (!response.ok) {
-        throw createError(data?.error?.message || 'Gemini API request failed.', response, data);
+        console.error('API error:', data);
+        throw new Error(data?.error?.message || 'API request failed');
       }
 
-      return data;
-    }
+      const reply = parseGeminiText(data);
 
-    async function generateText(request = {}) {
-      const data = await generateContent(request);
-      return getTextFromResponse(data);
-    }
-
-    async function generateJson(request = {}) {
-      const text = await generateText({
-        ...request,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          ...(request.generationConfig || {})
-        }
+      history.push({
+        role: 'model',
+        parts: [{ text: reply }]
       });
 
-      return parseJsonText(text);
+      return reply;
     }
-
-    function createChat(chatOptions = {}) {
-      const history = [...(chatOptions.history || [])];
-      const systemInstruction = chatOptions.systemInstruction;
-
-      return {
-        history,
-        async sendMessage(message, requestOptions = {}) {
-          history.push({
-            role: 'user',
-            parts: [{ text: message }]
-          });
-
-          const text = await generateText({
-            ...requestOptions,
-            contents: history,
-            systemInstruction: requestOptions.systemInstruction || systemInstruction
-          });
-
-          history.push({
-            role: 'model',
-            parts: [{ text }]
-          });
-
-          return text;
-        }
-      };
-    }
-
-    return {
-      generateContent,
-      generateText,
-      generateJson,
-      createChat
-    };
-  }
-
-  global.GeminiApi = {
-    DEFAULT_MODEL,
-    getApiKey,
-    resolveApiKey,
-    createClient,
-    getTextFromResponse,
-    parseJsonText
   };
+}
 
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = global.GeminiApi;
-  }
-})(typeof window !== 'undefined' ? window : globalThis);
+// --- Export for Browser, Node, or n8n ---
+const GeminiApi = {
+  API_KEY,
+  API_URL,
+  buildPrompt,
+  askGemini,
+  askGeminiText,
+  askGeminiJson,
+  createGeminiChat,
+  parseGeminiJson,
+  parseGeminiText
+};
+
+if (typeof window !== 'undefined') {
+  window.GeminiApi = GeminiApi;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = GeminiApi;
+}
