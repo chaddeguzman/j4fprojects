@@ -1,42 +1,64 @@
-// --- Dynamic Footer Year ---
-document.getElementById('year').textContent = new Date().getFullYear();
-
-// --- YOUR GOOGLE GEMINI API KEY ---
+// --- Gemini API Configuration ---
 const API_KEY = '__LLM_EXPLAIN_KEY__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 const API_KEY_PLACEHOLDERS = new Set(['', 'LLM_EXPLAIN_KEY', ['__', 'LLM_EXPLAIN_KEY', '__'].join('')]);
 
-// --- Conversation History ---
-const chatHistory = {
-  kid: [],
-  teen: []
+// --- Audience Foundations ---
+const audienceProfiles = {
+  child: {
+    label: 'Child Explanation',
+    systemPrompt: 'You are a friendly assistant explaining tech concepts to a 10-year-old child. Use very simple words, fun real-world analogies like toys, games, and everyday experiences, and keep responses under 80 words. Be warm, clear, and encouraging. No jargon. No bullet points. Just one short paragraph.'
+  },
+  teen: {
+    label: 'Teen Explanation',
+    systemPrompt: 'You are a friendly assistant explaining tech concepts to a 15-year-old teenager who is curious but not deeply technical. Use relatable analogies from apps, school, social media, and everyday life. Mention why the concept matters, and keep responses under 100 words. Be conversational and clear. No bullet points. Just one short paragraph.'
+  },
+  adult: {
+    label: 'Adult Explanation',
+    systemPrompt: 'You are a practical assistant explaining technical concepts to an adult beginner. Use plain language, define key terms briefly, include a realistic use case, and keep responses under 130 words. Be direct, useful, and easy to follow. No bullet points unless the user asks for them.'
+  }
 };
 
-let currentTopic = '';
-
-// --- Enter Key Triggers ---
+// --- DOM References ---
 const input = document.getElementById('termInput');
+const explainBtn = document.getElementById('explainBtn');
+const results = document.getElementById('results');
+const resultsTerm = document.getElementById('resultsTerm');
+const audienceLabel = document.getElementById('audienceLabel');
+const chat = document.getElementById('mainChat');
+const chatInput = document.getElementById('chatInput');
+
+// --- Chat State ---
+let currentAudience = 'child';
+let currentTopic = '';
+let chatHistory = [];
+
+// --- Initial Setup ---
+document.getElementById('year').textContent = new Date().getFullYear();
+
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter') explain();
 });
 
-const kidInput = document.getElementById('kidInput');
-kidInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendChatMessage('kid');
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage();
 });
 
-const teenInput = document.getElementById('teenInput');
-teenInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendChatMessage('teen');
-});
+// --- Audience Selector ---
+function setAudience(audience) {
+  currentAudience = audienceProfiles[audience] ? audience : 'child';
+  audienceLabel.textContent = audienceProfiles[currentAudience].label;
 
+  document.querySelectorAll('.audience-chip').forEach(button => {
+    button.classList.toggle('selected', button.dataset.audience === currentAudience);
+  });
+}
 
 // --- Example Chip Setter ---
 function setExample(term) {
   input.value = term;
   input.focus();
 }
-
 
 // --- Typing Indicator ---
 function typingIndicator() {
@@ -46,10 +68,8 @@ function typingIndicator() {
   </div>`;
 }
 
-
 // --- Message Bubble Builder ---
-function appendMessage(audience, role, text) {
-  const chat = document.getElementById(`${audience}Chat`);
+function appendMessage(role, text) {
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}`;
   bubble.textContent = text;
@@ -57,6 +77,27 @@ function appendMessage(audience, role, text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+function addTypingIndicator() {
+  const typing = document.createElement('div');
+  typing.className = 'typing-indicator';
+  typing.innerHTML = typingIndicator();
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+  return typing;
+}
+
+function getFoundationPrompt(term) {
+  return `${audienceProfiles[currentAudience].systemPrompt}\n\nExplain: "${term}"`;
+}
+
+function getApiKeyMessage() {
+  return 'Gemini API key is not configured. The GitHub Pages deploy must replace the API key placeholder in llm-explain-it-simple/script.js.';
+}
+
+function resetExplainButton() {
+  explainBtn.disabled = false;
+  explainBtn.textContent = 'Explain It \u2193';
+}
 
 // --- Main Explain Function ---
 async function explain() {
@@ -64,158 +105,93 @@ async function explain() {
   if (!term) return;
 
   currentTopic = term;
-  const btn         = document.getElementById('explainBtn');
-  const results     = document.getElementById('results');
-  const resultsTerm = document.getElementById('resultsTerm');
-  const kidChat     = document.getElementById('kidChat');
-  const teenChat    = document.getElementById('teenChat');
+  chatHistory = [];
+  chat.innerHTML = '';
 
-  // Set loading state
-  btn.disabled    = true;
-  btn.textContent = 'Thinking...';
-
-  // Clear previous chats
-  kidChat.innerHTML = '';
-  teenChat.innerHTML = '';
-  chatHistory.kid = [];
-  chatHistory.teen = [];
+  explainBtn.disabled = true;
+  explainBtn.textContent = 'Thinking...';
 
   results.classList.add('visible');
-  resultsTerm.innerHTML = `Explaining: <span>${term}</span>`;
+  resultsTerm.innerHTML = `Explaining for ${audienceProfiles[currentAudience].label}: <span>${term}</span>`;
+  appendMessage('user', term);
 
-  // Show user message in both chats
-  appendMessage('kid', 'user', term);
-  appendMessage('teen', 'user', term);
-
-  // Show typing indicators
-  const kidTyping = document.createElement('div');
-  kidTyping.className = 'typing-indicator';
-  kidTyping.innerHTML = typingIndicator();
-  kidChat.appendChild(kidTyping);
-  kidChat.scrollTop = kidChat.scrollHeight;
-
-  const teenTyping = document.createElement('div');
-  teenTyping.className = 'typing-indicator';
-  teenTyping.innerHTML = typingIndicator();
-  teenChat.appendChild(teenTyping);
-  teenChat.scrollTop = teenChat.scrollHeight;
-
+  const typing = addTypingIndicator();
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
-    const msg = 'Gemini API key is not configured. The GitHub Pages deploy must replace the API key placeholder in llm-explain-it-simple/script.js.';
-    kidTyping.remove();
-    teenTyping.remove();
-    appendMessage('kid', 'model', msg);
-    appendMessage('teen', 'model', msg);
-    btn.disabled = false;
-    btn.textContent = 'Explain It \u2193';
+    typing.remove();
+    appendMessage('model', getApiKeyMessage());
+    resetExplainButton();
     return;
   }
 
   try {
-    const [kidRes, teenRes] = await Promise.all([
-      fetchChatResponse(term, 'kid'),
-      fetchChatResponse(term, 'teen')
-    ]);
+    const response = await fetchChatResponse(term);
 
-    // Remove typing indicators
-    kidTyping.remove();
-    teenTyping.remove();
+    typing.remove();
+    appendMessage('model', response);
 
-    // Append AI responses
-    appendMessage('kid', 'model', kidRes);
-    appendMessage('teen', 'model', teenRes);
-
-    // Add system prompts to history
-    const systemPrompts = {
-      kid: 'You are a friendly assistant explaining tech concepts to a 10-year-old kid. Use very simple words, fun real-world analogies (toys, games, everyday experiences), and keep responses under 80 words. Be warm, clear, and encouraging. No jargon. No bullet points. Just one short paragraph.',
-      teen: 'You are a friendly assistant explaining tech concepts to a 15-year-old teenager who is curious but not deeply technical. Use relatable analogies (apps, school, social media, everyday life), mention why the concept matters, and keep responses under 100 words. Be conversational and clear. No bullet points. Just one short paragraph.'
-    };
-
-    chatHistory.kid = [
-      { role: 'user', parts: [{ text: systemPrompts.kid + '\n\nExplain: "' + term + '"' }] },
-      { role: 'model', parts: [{ text: kidRes }] }
+    chatHistory = [
+      { role: 'user', parts: [{ text: getFoundationPrompt(term) }] },
+      { role: 'model', parts: [{ text: response }] }
     ];
-    chatHistory.teen = [
-      { role: 'user', parts: [{ text: systemPrompts.teen + '\n\nExplain: "' + term + '"' }] },
-      { role: 'model', parts: [{ text: teenRes }] }
-    ];
-
   } catch (err) {
     console.error('Explain error:', err);
-    kidTyping.remove();
-    teenTyping.remove();
-    const msg = err?.message || 'Something went wrong. Please try again.';
-    appendMessage('kid', 'model', msg);
-    appendMessage('teen', 'model', msg);
+    typing.remove();
+    appendMessage('model', err?.message || 'Something went wrong. Please try again.');
   }
 
-  // Reset button
-  btn.disabled    = false;
-  btn.textContent = 'Explain It ↓';
+  resetExplainButton();
 }
 
-
 // --- Send Chat Message ---
-async function sendChatMessage(audience) {
-  const inputEl = document.getElementById(`${audience}Input`);
-  const message = inputEl.value.trim();
+async function sendChatMessage() {
+  const message = chatInput.value.trim();
   if (!message) return;
 
-  inputEl.value = '';
-  appendMessage(audience, 'user', message);
+  chatInput.value = '';
+  appendMessage('user', message);
 
-  const chat = document.getElementById(`${audience}Chat`);
-  const typing = document.createElement('div');
-  typing.className = 'typing-indicator';
-  typing.innerHTML = typingIndicator();
-  chat.appendChild(typing);
-  chat.scrollTop = chat.scrollHeight;
-
-  const sendBtn = inputEl.nextElementSibling;
+  const typing = addTypingIndicator();
+  const sendBtn = chatInput.nextElementSibling;
   sendBtn.disabled = true;
   sendBtn.textContent = '...';
 
-  try {
-    // Add user message to history
-    chatHistory[audience].push({ role: 'user', parts: [{ text: message }] });
+  if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
+    typing.remove();
+    appendMessage('model', getApiKeyMessage());
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+    return;
+  }
 
-    const response = await fetchChatHistoryResponse(audience);
+  try {
+    chatHistory.push({ role: 'user', parts: [{ text: message }] });
+
+    const response = await fetchChatHistoryResponse();
 
     typing.remove();
-    appendMessage(audience, 'model', response);
-
-    // Add model response to history
-    chatHistory[audience].push({ role: 'model', parts: [{ text: response }] });
-
+    appendMessage('model', response);
+    chatHistory.push({ role: 'model', parts: [{ text: response }] });
   } catch (err) {
     console.error('Chat error:', err);
     typing.remove();
-    appendMessage(audience, 'model', err?.message || 'Something went wrong. Please try again.');
+    appendMessage('model', err?.message || 'Something went wrong. Please try again.');
   }
 
   sendBtn.disabled = false;
   sendBtn.textContent = 'Send';
 }
 
-
 // --- Initial API Call (single prompt) ---
-async function fetchChatResponse(term, audience) {
-  const systemPrompts = {
-    kid: 'You are a friendly assistant explaining tech concepts to a 10-year-old kid. Use very simple words, fun real-world analogies (toys, games, everyday experiences), and keep responses under 80 words. Be warm, clear, and encouraging. No jargon. No bullet points. Just one short paragraph.',
-    teen: 'You are a friendly assistant explaining tech concepts to a 15-year-old teenager who is curious but not deeply technical. Use relatable analogies (apps, school, social media, everyday life), mention why the concept matters, and keep responses under 100 words. Be conversational and clear. No bullet points. Just one short paragraph.'
-  };
-
-  const prompt = systemPrompts[audience] + '\n\nExplain: "' + term + '"';
-
+async function fetchChatResponse(term) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [{ parts: [{ text: getFoundationPrompt(term) }] }]
     })
   });
 
@@ -229,16 +205,15 @@ async function fetchChatResponse(term, audience) {
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not generate explanation.';
 }
 
-
 // --- Follow-up API Call (with history) ---
-async function fetchChatHistoryResponse(audience) {
+async function fetchChatHistoryResponse() {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      contents: chatHistory[audience]
+      contents: chatHistory
     })
   });
 
@@ -252,14 +227,12 @@ async function fetchChatHistoryResponse(audience) {
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not generate a response.';
 }
 
-
 // --- Clear Chat ---
 function clearChat() {
-  document.getElementById('kidChat').innerHTML = '';
-  document.getElementById('teenChat').innerHTML = '';
-  chatHistory.kid = [];
-  chatHistory.teen = [];
-  document.getElementById('results').classList.remove('visible');
-  document.getElementById('termInput').value = '';
-  document.getElementById('termInput').focus();
+  chat.innerHTML = '';
+  chatHistory = [];
+  currentTopic = '';
+  results.classList.remove('visible');
+  input.value = '';
+  input.focus();
 }
