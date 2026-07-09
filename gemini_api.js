@@ -5,7 +5,10 @@ const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', 'INSERT_API_KEY', ['
 
 // --- Build Gemini Prompt ---
 function buildPrompt(userInput) {
+  // --- Custom Prompt Start ---
+  // Replace this block when a future project needs its own reusable prompt.
   return `${userInput}`;
+  // --- Custom Prompt End ---
 }
 
 // --- Parse Gemini JSON Response ---
