@@ -1,7 +1,7 @@
 // --- YOUR GOOGLE GEMINI API KEY ---
-const API_KEY = '__GEMINI_API_KEY__';
+const API_KEY = 'INSERT_API_KEY';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', '__GEMINI_API_KEY__']);
+const API_KEY_PLACEHOLDERS = new Set(['', 'GEMINI_API_KEY', 'INSERT_API_KEY', ['__', 'GEMINI_API_KEY', '__'].join('')]);
 
 // --- Build Gemini Prompt ---
 function buildPrompt(userInput) {
@@ -26,7 +26,7 @@ function parseGeminiText(data) {
 // --- Main Gemini Function ---
 async function askGemini(prompt, options = {}) {
   if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
-    throw new Error('Gemini API key is not configured. Replace __GEMINI_API_KEY__ before using gemini_api.js.');
+    throw new Error('Gemini API key is not configured. Replace INSERT_API_KEY before using gemini_api.js.');
   }
 
   const response = await fetch(API_URL, {
