@@ -2,8 +2,9 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // --- YOUR GOOGLE GEMINI API KEY ---
-const API_KEY = 'AQ.Ab8RN6IXR0MTLHRE7vXfre-VwCRVRtakXZ_dZ75iv99n0Xeo6w';
+const API_KEY = '__LLM_EXPLAIN_KEY__';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+const API_KEY_PLACEHOLDERS = new Set(['', 'LLM_EXPLAIN_KEY', ['__', 'LLM_EXPLAIN_KEY', '__'].join('')]);
 
 // --- Conversation History ---
 const chatHistory = {
@@ -100,6 +101,17 @@ async function explain() {
   teenChat.scrollTop = teenChat.scrollHeight;
 
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (API_KEY_PLACEHOLDERS.has(API_KEY)) {
+    const msg = 'Gemini API key is not configured. The GitHub Pages deploy must replace the API key placeholder in llm-explain-it-simple/script.js.';
+    kidTyping.remove();
+    teenTyping.remove();
+    appendMessage('kid', 'model', msg);
+    appendMessage('teen', 'model', msg);
+    btn.disabled = false;
+    btn.textContent = 'Explain It \u2193';
+    return;
+  }
 
   try {
     const [kidRes, teenRes] = await Promise.all([

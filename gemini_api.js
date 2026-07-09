@@ -25,7 +25,7 @@ function parseGeminiText(data) {
     .join('')
     .trim() || '';
 }
-
+ 
 // --- Main Gemini Function ---
 async function askGemini(prompt, options = {}) {
   if (API_KEY_PLACEHOLDERS.has(API_KEY)) {

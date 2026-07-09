@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TCODE_API: ${{ secrets.TCODE_API || vars.TCODE_API }}
+      LLM_EXPLAIN_KEY: ${{ secrets.LLM_EXPLAIN_KEY || vars.LLM_EXPLAIN_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,10 +31,15 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Inject T-Code API key
+      - name: Inject API keys
         run: |
           if [ -z "$TCODE_API" ]; then
             echo "TCODE_API is missing. Add it as a repository secret or variable."
+            exit 1
+          fi
+
+          if [ -z "$LLM_EXPLAIN_KEY" ]; then
+            echo "LLM_EXPLAIN_KEY is missing. Add it as a repository secret or variable."
             exit 1
           fi
 
@@ -41,10 +47,20 @@ jobs:
           import os
           from pathlib import Path
 
-          script_path = Path("sap-tcode-lookup/script.js")
-          script = script_path.read_text(encoding="utf-8")
-          script = script.replace("__TCODE_API__", os.environ["TCODE_API"])
-          script_path.write_text(script, encoding="utf-8")
+          replacements = {
+            Path("sap-tcode-lookup/script.js"): {
+              "__TCODE_API__": os.environ["TCODE_API"],
+            },
+            Path("llm-explain-it-simple/script.js"): {
+              "__LLM_EXPLAIN_KEY__": os.environ["LLM_EXPLAIN_KEY"],
+            },
+          }
+
+          for script_path, tokens in replacements.items():
+            script = script_path.read_text(encoding="utf-8")
+            for token, value in tokens.items():
+              script = script.replace(token, value)
+            script_path.write_text(script, encoding="utf-8")
           PY
 
       - name: Upload Pages artifact
